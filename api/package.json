@@ -1,0 +1,26 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "migrate": "node src/db/migrar.js",
+    "seed": "node src/db/migrar.js --seed 002_seed_catalogos.sql",
+    "test": "jest --runInBand"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/tests"]
+  },
+  "dependencies": {
+    "dotenv": "^17.0.0",
+    "express": "^5.2.1",
+    "multer": "^2.0.2",
+    "pg": "^8.16.3",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
+  }
+}

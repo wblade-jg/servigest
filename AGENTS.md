@@ -25,6 +25,7 @@ No cargues documentos adicionales de forma anticipada. Si una tarea exige una re
 | Frontend | React + Vite + TypeScript estricto |
 | UI | Tailwind CSS + shadcn/ui |
 | Tiempo real | SSE |
+| API | REST estricto: recursos en sustantivos, verbos HTTP (`GET`, `POST`, `PATCH`, `DELETE`), sin acciones en la URL salvo transiciones de estado del dominio |
 | Auth | Sesión en PostgreSQL + cookie httpOnly + CSRF |
 | Pruebas | Jest + Supertest |
 | Entorno | Docker Compose: `db`, `api`, `web` |

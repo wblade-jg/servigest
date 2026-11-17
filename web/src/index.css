@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  /* Paleta: tinta marino + violeta del logo */
+  --color-tinta-950: #0f1324;
+  --color-tinta-900: #141a2e;
+  --color-tinta-700: #2c3554;
+  --color-tinta-500: #5b6584;
+  --color-lavanda: #f3f4fb;
+  --color-lavanda-honda: #e7e9f6;
+  --color-violeta-400: #7a58f5;
+  --color-violeta-500: #5b34f0;
+  --color-violeta-700: #3f1fb5;
+
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Source Serif 4", ui-serif, Georgia, serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  @apply bg-lavanda text-tinta-900 font-body antialiased;
+}

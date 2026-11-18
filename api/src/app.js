@@ -27,6 +27,7 @@ function crearApp ({ uploadDir, eventos }) {
   app.use('/api/organizaciones', require('./modules/organizaciones/routes'))
   app.use('/api/usuarios', require('./modules/usuarios/routes'))
   app.use('/api/tecnicos', require('./modules/tecnicos/routes'))
+  app.use('/api', require('./modules/intervenciones/routes'))
   app.use('/api/solicitudes', require('./modules/solicitudes/routes'))
   app.use('/api/eventos', require('./modules/eventos/routes'))
 

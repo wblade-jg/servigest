@@ -4,11 +4,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react'
 import { get, post, patch, setCsrfToken, setManejadorSesionExpirada } from './api'
 
+export type Rol = 'ADMIN' | 'COORDINADOR' | 'TECNICO' | 'CLIENTE'
+
 export interface Usuario {
   id: string
   nombre: string
   email: string
-  rol: 'ADMIN' | 'COORDINADOR' | 'TECNICO' | 'CLIENTE'
+  rol: Rol
   organizacionId: string | null
 }
 

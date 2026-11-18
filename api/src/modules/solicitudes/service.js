@@ -425,6 +425,21 @@ const TRANSICIONES = {
     }
   },
 
+  'RESUELTA:CERRADA': {
+    roles: ['ADMIN', 'COORDINADOR'],
+    tipoEvento: 'CIERRE',
+    aplicar: async ({ solicitud }) => {
+      if (!solicitud.resolucion) {
+        throw new ApiError(409, 'CIERRE_SIN_RESOLUCION',
+          'No se puede cerrar una solicitud sin resolución documentada.')
+      }
+      return {
+        cambios: { cerradaEn: new Date().toISOString() },
+        metadata: { resolucion: solicitud.resolucion }
+      }
+    }
+  },
+
   'ASIGNADA:ASIGNADA': {
     roles: ['ADMIN', 'COORDINADOR'],
     tipoEvento: 'REASIGNACION',
@@ -590,6 +605,16 @@ async function transicionarEstado (usuario, solicitudId, estadoDestino, cuerpo =
         tokenPublico: resultado.tokenPublico
       },
       'solicitud.reasignada'
+    )
+  } else if (tipoEventoAplicado === 'CIERRE') {
+    notificarCambio(
+      {
+        solicitudId: resultado.solicitudId,
+        codigo: resultado.codigo,
+        estado: resultado.estado,
+        tokenPublico: resultado.tokenPublico
+      },
+      'solicitud.cerrada'
     )
   }
 

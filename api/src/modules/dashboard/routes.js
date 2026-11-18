@@ -1,8 +1,6 @@
-'use strict'
-
-const express = require('express')
-const { autenticar, soloRoles } = require('../../middlewares/autenticacion')
-const controller = require('./controller')
+import express from 'express'
+import { autenticar, soloRoles } from '../../middlewares/autenticacion.js'
+import * as controller from './controller.js'
 
 const router = express.Router()
 
@@ -12,4 +10,4 @@ router.get('/',
   soloRoles('ADMIN', 'COORDINADOR', 'CLIENTE'),
   controller.obtener)
 
-module.exports = router
+export default router

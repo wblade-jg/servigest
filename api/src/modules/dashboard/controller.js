@@ -1,6 +1,4 @@
-'use strict'
-
-const servicio = require('./service')
+import * as servicio from './service.js'
 
 async function obtener (req, res, siguiente) {
   try {
@@ -8,4 +6,4 @@ async function obtener (req, res, siguiente) {
   } catch (error) { siguiente(error) }
 }
 
-module.exports = { obtener }
+export { obtener }

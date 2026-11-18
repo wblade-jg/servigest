@@ -1,13 +1,11 @@
-'use strict'
-
-const fs = require('fs')
-const path = require('path')
-const crypto = require('crypto')
-const { conTransaccion } = require('../../db/transaccion')
-const { ApiError } = require('../../middlewares/errores')
-const { emitir, notificarPrueba } = require('../eventos/emisor')
-const { EMAIL_RE, generarToken } = require('../../lib/validaciones')
-const repositorio = require('./repository')
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { conTransaccion } from '../../db/transaccion.js'
+import { ApiError } from '../../middlewares/errores.js'
+import { emitir, notificarPrueba } from '../eventos/emisor.js'
+import { EMAIL_RE, generarToken } from '../../lib/validaciones.js'
+import * as repositorio from './repository.js'
 
 // Reglas de negocio del flujo público.
 
@@ -128,7 +126,7 @@ async function obtenerSeguimiento (token) {
   }
 }
 
-module.exports = {
+export {
   crearSolicitudPublica,
   obtenerSeguimiento,
   listarCategoriasActivas,

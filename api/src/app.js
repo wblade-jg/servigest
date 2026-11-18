@@ -1,9 +1,18 @@
-'use strict'
-
-const express = require('express')
-const swaggerUi = require('swagger-ui-express')
-const cookieParser = require('cookie-parser')
-const { manejarErrores } = require('./middlewares/errores')
+import express from 'express'
+import swaggerUi from 'swagger-ui-express'
+import cookieParser from 'cookie-parser'
+import { manejarErrores } from './middlewares/errores.js'
+import openapi from './openapi.js'
+import rutasPublic from './modules/public/routes.js'
+import rutasCatalogos from './modules/catalogos/routes.js'
+import rutasAuth from './modules/auth/routes.js'
+import rutasOrganizaciones from './modules/organizaciones/routes.js'
+import rutasUsuarios from './modules/usuarios/routes.js'
+import rutasTecnicos from './modules/tecnicos/routes.js'
+import rutasIntervenciones from './modules/intervenciones/routes.js'
+import rutasSolicitudes from './modules/solicitudes/routes.js'
+import rutasDashboard from './modules/dashboard/routes.js'
+import rutasEventos from './modules/eventos/routes.js'
 
 function crearApp ({ uploadDir, eventos }) {
   const app = express()
@@ -21,22 +30,21 @@ function crearApp ({ uploadDir, eventos }) {
     res.json({ estado: 'ok' })
   })
 
-  app.use('/api/public', require('./modules/public/routes'))
-  app.use('/api/catalogos', require('./modules/catalogos/routes'))
-  app.use('/api/auth', require('./modules/auth/routes'))
-  app.use('/api/organizaciones', require('./modules/organizaciones/routes'))
-  app.use('/api/usuarios', require('./modules/usuarios/routes'))
-  app.use('/api/tecnicos', require('./modules/tecnicos/routes'))
-  app.use('/api', require('./modules/intervenciones/routes'))
-  app.use('/api/solicitudes', require('./modules/solicitudes/routes'))
-  app.use('/api/dashboard', require('./modules/dashboard/routes'))
-  app.use('/api/eventos', require('./modules/eventos/routes'))
+  app.use('/api/public', rutasPublic)
+  app.use('/api/catalogos', rutasCatalogos)
+  app.use('/api/auth', rutasAuth)
+  app.use('/api/organizaciones', rutasOrganizaciones)
+  app.use('/api/usuarios', rutasUsuarios)
+  app.use('/api/tecnicos', rutasTecnicos)
+  app.use('/api', rutasIntervenciones)
+  app.use('/api/solicitudes', rutasSolicitudes)
+  app.use('/api/dashboard', rutasDashboard)
+  app.use('/api/eventos', rutasEventos)
 
-  const openapi = require('./openapi')
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openapi))
 
   app.use(manejarErrores)
   return app
 }
 
-module.exports = { crearApp }
+export { crearApp }

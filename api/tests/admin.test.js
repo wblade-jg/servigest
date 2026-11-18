@@ -1,8 +1,6 @@
-'use strict'
-
 // Pruebas de módulos administrativos: CSRF, validaciones y formato de paginación uniforme.
 
-const {
+import {
   iniciarEntorno,
   agente,
   limpiarTablas,
@@ -10,7 +8,7 @@ const {
   crearUsuario,
   loginComo,
   CLAVE_PRUEBA
-} = require('./auxiliares')
+} from './auxiliares.js'
 
 let admin = null
 

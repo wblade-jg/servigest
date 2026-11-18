@@ -1,6 +1,4 @@
-'use strict'
-
-const { pool } = require('../../config/pool')
+import { pool } from '../../config/pool.js'
 
 // SQL del dashboard operativo. El filtro por organización es opcional: se
 // aplica siempre que la consulta sea de un Cliente (aislamiento en la BD).
@@ -82,7 +80,7 @@ async function total (organizacionId) {
   return rows[0].total
 }
 
-module.exports = {
+export {
   porEstado,
   porPrioridad,
   resumenSla,

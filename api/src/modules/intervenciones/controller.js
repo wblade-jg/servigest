@@ -1,6 +1,4 @@
-'use strict'
-
-const servicio = require('./service')
+import * as servicio from './service.js'
 
 async function iniciar (req, res, siguiente) {
   try {
@@ -21,4 +19,4 @@ async function listar (req, res, siguiente) {
   } catch (error) { siguiente(error) }
 }
 
-module.exports = { iniciar, resolver, listar }
+export { iniciar, resolver, listar }

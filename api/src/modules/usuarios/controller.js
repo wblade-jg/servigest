@@ -1,6 +1,4 @@
-'use strict'
-
-const servicio = require('./service')
+import * as servicio from './service.js'
 
 // Controladores de usuarios.
 
@@ -58,7 +56,7 @@ async function desactivar (req, res, siguiente) {
   }
 }
 
-module.exports = {
+export {
   listar,
   obtenerPorId,
   crear,

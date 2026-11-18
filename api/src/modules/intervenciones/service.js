@@ -1,10 +1,8 @@
-'use strict'
-
-const { ApiError } = require('../../middlewares/errores')
-const { emitir, notificarPrueba } = require('../eventos/emisor')
-const { conTransaccion } = require('../../db/transaccion')
-const repositorio = require('./repository')
-const repositorioSolicitudes = require('../solicitudes/repository')
+import { ApiError } from '../../middlewares/errores.js'
+import { emitir, notificarPrueba } from '../eventos/emisor.js'
+import { conTransaccion } from '../../db/transaccion.js'
+import * as repositorio from './repository.js'
+import * as repositorioSolicitudes from '../solicitudes/repository.js'
 
 // Reglas de negocio de las intervenciones del técnico.
 // Iniciar: ASIGNADA → EN_PROCESO. Resolver: EN_PROCESO → RESUELTA.
@@ -209,7 +207,7 @@ async function listar (usuario, solicitudId) {
   return repositorio.listarPorSolicitud(solicitudId)
 }
 
-module.exports = {
+export {
   iniciar,
   resolver,
   listar

@@ -1,9 +1,7 @@
-'use strict'
-
-const crypto = require('crypto')
-const bcrypt = require('bcryptjs')
-const { ApiError } = require('../../middlewares/errores')
-const repositorio = require('./repository')
+import crypto from 'node:crypto'
+import bcrypt from 'bcryptjs'
+import { ApiError } from '../../middlewares/errores.js'
+import * as repositorio from './repository.js'
 
 // Reglas de negocio de autenticación y sesiones.
 
@@ -107,4 +105,4 @@ async function cambiarPassword ({ usuarioId, actual, nueva }) {
   return { ok: true }
 }
 
-module.exports = { iniciarSesion, cerrarSesion, cambiarPassword, COSTE_BCRYPT, HORAS_SESION, INTENTOS_MAXIMOS }
+export { iniciarSesion, cerrarSesion, cambiarPassword, COSTE_BCRYPT, HORAS_SESION, INTENTOS_MAXIMOS }

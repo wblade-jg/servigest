@@ -1,9 +1,7 @@
-'use strict'
-
-const express = require('express')
-const { crearLimitador } = require('../../middlewares/limitador')
-const { autenticar, exigirCsrf } = require('../../middlewares/autenticacion')
-const controller = require('./controller')
+import express from 'express'
+import { crearLimitador } from '../../middlewares/limitador.js'
+import { autenticar, exigirCsrf } from '../../middlewares/autenticacion.js'
+import * as controller from './controller.js'
 
 const router = express.Router()
 
@@ -21,4 +19,4 @@ router.post('/logout', autenticar, exigirCsrf, controller.logout)
 router.get('/me', autenticar, controller.me)
 router.patch('/password', autenticar, exigirCsrf, controller.cambiarPassword)
 
-module.exports = router
+export default router

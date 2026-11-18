@@ -1,10 +1,8 @@
-'use strict'
-
-const bcrypt = require('bcryptjs')
-const { ApiError } = require('../../middlewares/errores')
-const { validarPassword, EMAIL_RE, parsearPaginacion } = require('../../lib/validaciones')
-const repositorio = require('./repository')
-const { COSTE_BCRYPT } = require('../auth/service')
+import bcrypt from 'bcryptjs'
+import { ApiError } from '../../middlewares/errores.js'
+import { validarPassword, EMAIL_RE, parsearPaginacion } from '../../lib/validaciones.js'
+import * as repositorio from './repository.js'
+import { COSTE_BCRYPT } from '../auth/service.js'
 
 // Reglas de negocio de usuarios.
 
@@ -204,7 +202,7 @@ async function desactivar (usuario, id) {
   return { ok: true, id: desactivado.id }
 }
 
-module.exports = {
+export {
   listar,
   obtenerPorId,
   crear,

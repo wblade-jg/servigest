@@ -1,17 +1,16 @@
-'use strict'
-
 // Pruebas del módulo de autenticación: login, bloqueo, CSRF, sesión y password.
 
-const {
+import {
   iniciarEntorno,
   agente,
   limpiarTablas,
   cerrarEntorno,
+  crearOrganizacion,
   crearUsuario,
   loginComo,
   CLAVE_PRUEBA
-} = require('./auxiliares')
-const { pool } = require('../src/config/pool')
+} from './auxiliares.js'
+import { pool } from '../src/config/pool.js'
 
 let coordinador = null
 
@@ -218,7 +217,6 @@ describe('PATCH /api/auth/password', () => {
 
 describe('Roles', () => {
   test('un Cliente no accede al historial de auditoría → 403', async () => {
-    const { crearOrganizacion } = require('./auxiliares')
     await crearUsuario({
       email: 'cliente@prueba.com.ec',
       rol: 'CLIENTE',

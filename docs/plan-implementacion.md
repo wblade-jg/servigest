@@ -20,6 +20,7 @@
 | Fase 2 — Creación Interna | ✅ Solicitudes creadas por Coordinador/Admin mediante `POST /api/solicitudes` se guardan con origen `PUBLICO` y `organizacion_nombre`. Las creadas por Cliente usan origen `CLIENTE` con su `organizacion_id`. |
 | Fase 2 — Frontend | ✅ Primitivos locales con Tailwind CSS. Vistas de `Bandeja.tsx` y `Detalle.tsx` con modales interactivos para capturar datos requeridos según la transición. |
 | Fase 2 — Demo Seed | ✅ `seeds/003_usuarios_demo.sql` con Admin, Coordinador y 2 Clientes (contraseña: `Demo1234!`). |
+| Backend — Módulos | ✅ API migrada a ESM nativo (`"type": "module"`): imports con extensión `.js`, sin `require`/`module.exports`, `__dirname` reemplazado por `import.meta.url` y Jest en modo ESM (`--experimental-vm-modules`). |
 
 ---
 

@@ -1,6 +1,4 @@
-'use strict'
-
-const { pool } = require('../../config/pool')
+import { pool } from '../../config/pool.js'
 
 // SQL del módulo de intervenciones. Las reglas de negocio viven en service.js.
 
@@ -71,7 +69,7 @@ async function cerrar (cliente, id, { fin, diagnostico, actividades, resultado, 
   return rows[0]
 }
 
-module.exports = {
+export {
   listarPorSolicitud,
   obtenerPorId,
   bloquearPorId,

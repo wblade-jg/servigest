@@ -1,7 +1,5 @@
-'use strict'
-
 // Validación del entorno. Falla rápido si falta una variable obligatoria.
-require('dotenv').config()
+import 'dotenv/config'
 
 function requerida (nombre) {
   const valor = process.env[nombre]
@@ -19,4 +17,4 @@ const entorno = {
   sessionSecret: process.env.SESSION_SECRET || ''
 }
 
-module.exports = { entorno }
+export { entorno }

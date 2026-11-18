@@ -1,7 +1,5 @@
-'use strict'
-
 // Especificación OpenAPI mínima para el flujo de la fase 1.
-module.exports = {
+export default {
   openapi: '3.0.0',
   info: {
     title: 'ServiGest API (P0)',

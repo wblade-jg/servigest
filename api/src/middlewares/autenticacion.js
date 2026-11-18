@@ -1,9 +1,7 @@
-'use strict'
-
-const crypto = require('crypto')
-const { ApiError } = require('./errores')
-const repositorio = require('../modules/auth/repository')
-const { COOKIE_SESION } = require('../modules/auth/controller')
+import crypto from 'node:crypto'
+import { ApiError } from './errores.js'
+import * as repositorio from '../modules/auth/repository.js'
+import { COOKIE_SESION } from '../modules/auth/controller.js'
 
 // Sesión, CSRF y roles.
 
@@ -70,4 +68,4 @@ function soloRoles (...rolesPermitidos) {
   }
 }
 
-module.exports = { autenticar, exigirCsrf, sesionConCsrf, soloRoles, METODOS_MUTANTES }
+export { autenticar, exigirCsrf, sesionConCsrf, soloRoles, METODOS_MUTANTES }

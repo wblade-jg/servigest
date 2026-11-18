@@ -1,8 +1,6 @@
-'use strict'
-
 // Pruebas del Portal del Cliente (Grupo G5 - Fase 3)
 
-const {
+import {
   iniciarEntorno,
   agente,
   limpiarTablas,
@@ -13,8 +11,8 @@ const {
   crearSolicitudDirecta,
   categoriaReal,
   CLAVE_PRUEBA
-} = require('./auxiliares')
-const { pool } = require('../src/config/pool')
+} from './auxiliares.js'
+import { pool } from '../src/config/pool.js'
 
 let organizacionA = null
 let organizacionB = null

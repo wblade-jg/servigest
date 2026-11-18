@@ -1,5 +1,3 @@
-'use strict'
-
 // Emisor SSE en memoria. Sin persistencia de notificaciones.
 // El cliente reconecta y refetcha por REST para cubrir eventos perdidos.
 
@@ -43,4 +41,4 @@ function notificarPrueba (evento, datos) {
   }
 }
 
-module.exports = { suscribir, emitir, enPrueba, notificarPrueba }
+export { suscribir, emitir, enPrueba, notificarPrueba }

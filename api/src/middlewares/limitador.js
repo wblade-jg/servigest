@@ -1,6 +1,4 @@
-'use strict'
-
-const { ApiError } = require('./errores')
+import { ApiError } from './errores.js'
 
 // Limitador en memoria: máximo `max` peticiones por `ventanaMs` por clave.
 // Sin persistencia: al reiniciar la API el contador se reinicia (aceptable en P0).
@@ -28,4 +26,4 @@ function crearLimitador ({ max, ventanaMs, code, message }) {
   }
 }
 
-module.exports = { crearLimitador }
+export { crearLimitador }

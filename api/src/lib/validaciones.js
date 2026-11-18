@@ -1,7 +1,5 @@
-'use strict'
-
-const crypto = require('crypto')
-const { ApiError } = require('../middlewares/errores')
+import crypto from 'node:crypto'
+import { ApiError } from '../middlewares/errores.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -36,7 +34,7 @@ function parsearPaginacion (query = {}, defaultLimit = 20, maxLimit = 100) {
   return { page, limit }
 }
 
-module.exports = {
+export {
   EMAIL_RE,
   validarEmail,
   validarPassword,

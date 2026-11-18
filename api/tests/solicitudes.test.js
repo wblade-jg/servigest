@@ -1,8 +1,6 @@
-'use strict'
-
 // Pruebas del ciclo de coordinación: listado, detalle, creación y transiciones.
 
-const {
+import {
   iniciarEntorno,
   agente,
   limpiarTablas,
@@ -13,8 +11,8 @@ const {
   categoriaReal,
   loginComo,
   eventos
-} = require('./auxiliares')
-const { pool } = require('../src/config/pool')
+} from './auxiliares.js'
+import { pool } from '../src/config/pool.js'
 
 let coordAgent
 let orgA

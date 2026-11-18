@@ -1,11 +1,9 @@
-'use strict'
-
-const { ApiError } = require('../../middlewares/errores')
-const { emitir, notificarPrueba } = require('../eventos/emisor')
-const { conTransaccion } = require('../../db/transaccion')
-const { EMAIL_RE, generarToken, parsearPaginacion } = require('../../lib/validaciones')
-const repositorio = require('./repository')
-const repositorioPublico = require('../public/repository')
+import { ApiError } from '../../middlewares/errores.js'
+import { emitir, notificarPrueba } from '../eventos/emisor.js'
+import { conTransaccion } from '../../db/transaccion.js'
+import { EMAIL_RE, generarToken, parsearPaginacion } from '../../lib/validaciones.js'
+import * as repositorio from './repository.js'
+import * as repositorioPublico from '../public/repository.js'
 
 // Reglas de negocio del ciclo de vida de la solicitud.
 // Cada transición se ejecuta en transacción, con bloqueo de fila y auditoría.
@@ -705,7 +703,7 @@ async function listarEventos (usuario, solicitudId) {
   return repositorio.listarEventos(solicitudId)
 }
 
-module.exports = {
+export {
   listar,
   obtenerDetalle,
   crearSolicitud,

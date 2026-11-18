@@ -1,6 +1,4 @@
-'use strict'
-
-const { pool } = require('../../config/pool')
+import { pool } from '../../config/pool.js'
 
 // SQL del módulo de solicitudes. Las reglas de negocio viven en service.js.
 
@@ -249,7 +247,7 @@ async function detectarChoqueHorario (cliente, tecnicoId, fechaProgramada, solic
   return rows
 }
 
-module.exports = {
+export {
   listar,
   obtenerPorId,
   bloquearPorId,

@@ -1,21 +1,17 @@
-'use strict'
-
 // Utilidades de pruebas: base de datos de prueba, migraciones y app bajo prueba.
+// La URL de la base de datos se define en `prepararEntorno.js` (setupFiles de Jest),
+// que se ejecuta antes de importar cualquier módulo.
 
-// Debe definirse ANTES de requerir config/pool.
-process.env.DATABASE_URL =
-  process.env.DATABASE_URL_TEST ||
-  'postgres://servigest:servigest@localhost:5432/servigest_test'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import supertest from 'supertest'
+import bcrypt from 'bcryptjs'
 
-const fs = require('fs')
-const os = require('os')
-const path = require('path')
-const supertest = require('supertest')
-
-const { migrar } = require('../src/db/migrar')
-const { pool } = require('../src/config/pool')
-const { crearApp } = require('../src/app')
-const eventos = require('../src/modules/eventos/emisor')
+import { migrar } from '../src/db/migrar.js'
+import { pool } from '../src/config/pool.js'
+import { crearApp } from '../src/app.js'
+import * as eventos from '../src/modules/eventos/emisor.js'
 
 let app
 let directorioSubidas
@@ -70,8 +66,6 @@ async function categoriaReal () {
 }
 
 // ─── Usuarios y sesiones (fase 2) ───────────────────────────────────────────
-
-const bcrypt = require('bcryptjs')
 
 // Hash compartido para no pagar bcrypt coste 12 en cada creación.
 const CLAVE_PRUEBA = 'Prueba1234'
@@ -161,7 +155,7 @@ async function cerrarEntorno () {
   await pool.end()
 }
 
-module.exports = {
+export {
   iniciarEntorno,
   getApp,
   agente,

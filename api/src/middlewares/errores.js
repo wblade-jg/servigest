@@ -1,5 +1,3 @@
-'use strict'
-
 // Errores uniformes: { error: { code, message, details } }
 
 class ApiError extends Error {
@@ -34,4 +32,4 @@ function manejarErrores (error, req, res, _siguiente) {
   })
 }
 
-module.exports = { ApiError, manejarErrores }
+export { ApiError, manejarErrores }

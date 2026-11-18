@@ -1,7 +1,5 @@
-'use strict'
-
-const servicio = require('./service')
-const { ApiError } = require('../../middlewares/errores')
+import * as servicio from './service.js'
+import { ApiError } from '../../middlewares/errores.js'
 
 const UID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
 
@@ -71,7 +69,7 @@ async function regenerarToken (req, res, siguiente) {
   } catch (error) { siguiente(error) }
 }
 
-module.exports = {
+export {
   listar,
   obtener,
   crear,

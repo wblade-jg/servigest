@@ -1,6 +1,4 @@
-'use strict'
-
-const servicio = require('./service')
+import * as servicio from './service.js'
 
 const COOKIE_SESION = 'sg_session'
 
@@ -58,4 +56,4 @@ async function cambiarPassword (req, res, siguiente) {
   } catch (error) { siguiente(error) }
 }
 
-module.exports = { login, logout, me, cambiarPassword, COOKIE_SESION, opcionesCookie }
+export { login, logout, me, cambiarPassword, COOKIE_SESION, opcionesCookie }

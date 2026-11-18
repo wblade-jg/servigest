@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../../lib/api'
@@ -11,6 +11,33 @@ const MENSAJES: Record<string, string> = {
   LIMITE_LOGIN: 'Demasiados intentos de inicio de sesión. Espera unos minutos.',
 }
 
+function rutaPermitidaParaRol(rol?: string, ruta?: string): boolean {
+  if (!ruta || !ruta.startsWith('/app')) return false
+  if (ruta === '/app') return true
+  if (rol === 'TECNICO') {
+    return ruta.startsWith('/app/agenda')
+  }
+  if (rol === 'CLIENTE') {
+    return ruta.startsWith('/app/mis-solicitudes') || ruta === '/app/dashboard'
+  }
+  if (rol === 'COORDINADOR') {
+    return ruta.startsWith('/app/solicitudes') || ruta === '/app/dashboard'
+  }
+  if (rol === 'ADMIN') {
+    return !ruta.startsWith('/app/mis-solicitudes') && !ruta.startsWith('/app/agenda')
+  }
+  return false
+}
+
+function calcularDestino(rol?: string, from?: string): string {
+  if (rol && rutaPermitidaParaRol(rol, from)) {
+    return from!
+  }
+  if (rol === 'TECNICO') return '/app/agenda'
+  if (rol === 'CLIENTE') return '/app/mis-solicitudes'
+  return '/app/solicitudes'
+}
+
 export default function Login() {
   const { login, usuario } = useAuth()
   const navegar = useNavigate()
@@ -20,7 +47,14 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  const destino = (ubicacion.state as { from?: string } | null)?.from ?? '/app/solicitudes'
+  const rawFrom = (ubicacion.state as { from?: string } | null)?.from
+  const destino = calcularDestino(usuario?.rol, rawFrom)
+
+  useEffect(() => {
+    if (usuario) {
+      navegar(destino, { replace: true })
+    }
+  }, [usuario, destino, navegar])
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
@@ -28,7 +62,6 @@ export default function Login() {
     setError(null)
     try {
       await login(email.trim(), password)
-      navegar(destino, { replace: true })
     } catch (err) {
       const code = err instanceof ApiError ? err.code : 'ERROR_INTERNO'
       setError(MENSAJES[code] ?? 'No se pudo iniciar sesión.')
@@ -39,7 +72,6 @@ export default function Login() {
 
   // Sesión activa: fuera de la pantalla de login.
   if (usuario) {
-    navegar(destino, { replace: true })
     return null
   }
 

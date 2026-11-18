@@ -11,6 +11,7 @@ export default function Solicitar() {
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [enviando, setEnviando] = useState(false)
   const [resultado, setResultado] = useState<CreacionSolicitud | null>(null)
+  const [copiado, setCopiado] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -72,15 +73,40 @@ export default function Solicitar() {
           </h1>
           <p className="mt-4 text-tinta-700">
             Tu solicitud quedó registrada con el código{' '}
-            <strong className="font-display">{resultado.codigo}</strong>. Guárdalo junto con tu
-            enlace de seguimiento.
+            <strong className="font-display text-tinta-950">{resultado.codigo}</strong> (referencia para llamadas y correos).
           </p>
-          <Link
-            to={`/seguimiento/${resultado.token}`}
-            className="mt-6 inline-block rounded-md bg-violeta-500 px-6 py-3 font-display font-bold text-white transition-colors hover:bg-violeta-700"
-          >
-            Ver seguimiento
-          </Link>
+
+          <div className="mt-6 rounded-md border border-green-300 bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-tinta-500">
+              Token de seguimiento en línea
+            </p>
+            <p className="mt-1 break-all font-mono text-sm font-bold text-tinta-900 select-all">
+              {resultado.token}
+            </p>
+            <p className="mt-2 text-xs text-tinta-500">
+              Guarda este token para consultar el avance en la barra de búsqueda de la página principal.
+            </p>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              to={`/seguimiento/${resultado.token}`}
+              className="rounded-md bg-violeta-500 px-6 py-3 font-display font-bold text-white transition-colors hover:bg-violeta-700"
+            >
+              Ver seguimiento
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard?.writeText(resultado.token)
+                setCopiado(true)
+                setTimeout(() => setCopiado(false), 2000)
+              }}
+              className="rounded-md border border-tinta-900/20 bg-white px-4 py-3 font-display text-sm font-bold text-tinta-800 transition-colors hover:bg-tinta-50"
+            >
+              {copiado ? '✓ Token copiado' : 'Copiar token'}
+            </button>
+          </div>
         </div>
       </section>
     )

@@ -2,15 +2,13 @@
 
 const { ApiError } = require('../../middlewares/errores')
 const servicio = require('./service')
-const { suscribir } = require('../eventos/emisor')
 const { detectarMime, MIME_PERMITIDOS, TAMANO_MAX, MAX_ADJUNTOS, sanitizarNombre, extensionDe } = require('./mime')
 
 // Handlers del módulo público.
 
 async function getCategorias (req, res, siguiente) {
   try {
-    const repositorio = require('./repository')
-    const filas = await repositorio.listarCategoriasActivas()
+    const filas = await servicio.listarCategoriasActivas()
     res.json({ data: filas })
   } catch (error) { siguiente(error) }
 }

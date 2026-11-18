@@ -1,313 +1,353 @@
 # Plan de implementación — ServiGest P0
 
-**Fecha:** 2026-11-17
-**Estado:** Fase 0 y Fase 1 completas. Iniciando Fase 2.
-**Fuente de diseño:** `docs/acuerdo-diseno.md`
-**Rama actual:** `feature/api-public-flow` (base `1194577`, landing mergeada a `main`)
+**Fecha:** 2026-11-17  
+**Estado:** Fases 0, 1 y 2 completadas y alineadas con REST estricto. Siguiente: Fase 3 (técnico, cliente y dashboard).  
+**Fuente de diseño:** `docs/acuerdo-diseno.md` (prevalece sobre cualquier otra fuente).  
 
 ---
 
-## 0. Decisiones ya tomadas
+## 0. Decisiones y Estado Real del Repositorio
 
-| Tema | Decisión |
+| Tema | Decisión y Estado Actual |
 |---|---|
-| Repositorio remoto | Crear repo **público** `servigest` en la cuenta `wblade-jg` |
-| Navegación móvil | Ajuste responsive simple (dos filas), sin JS adicional |
-| Cierre de landing | Commit mergeado a `main` vía fast-forward (`1194577`) |
-| Fase 1 | Backend base + flujo público implementado en `feature/api-public-flow` |
-| Fase siguiente | Auth + sesiones + RBAC + flujo del coordinador (Fase 2) |
+| Repositorio remoto | Repo público `servigest` en la cuenta `wblade-jg` |
+| Fase 0 — Landing | ✅ Cerrada y mergeada a `main` (`1194577`). Responsive simple sin JS adicional. |
+| Fase 1 — API Pública | ✅ Implementada. Formulario público con adjuntos (magic bytes), seguimiento por token y SSE. |
+| Fase 2 — Auth & Sesión | ✅ Sesión en PostgreSQL (`sesiones`), cookie httpOnly `SameSite=Lax`, CSRF obligatorio con `X-CSRF-Token`, bloqueo tras 5 intentos fallidos. |
+| Fase 2 — REST Estricto | ✅ Recursos en sustantivos. Todas las transiciones del ciclo de vida se ejecutan mediante `PATCH /api/solicitudes/:id/estado` con `{ estado, ...datos }`. La regeneración de token público se expone como subrecurso `POST /api/solicitudes/:id/token`. Sin verbos en la URL. |
+| Fase 2 — FSM Declarativa | ✅ Motor de transiciones unificado en `api/src/modules/solicitudes/service.js` basado en tabla declarativa con validación de roles, guards contextuales, auditoría atómica en `eventos_solicitud` y notificaciones SSE estrictamente post-commit. |
+| Fase 2 — Ciclo de Revisión | ✅ `REQUIERE_INFORMACION → EN_REVISION` exige nota interna documentando la gestión realizada. Se eliminó la aprobación directa desde `REQUIERE_INFORMACION`, requiriendo volver primero a `EN_REVISION`. |
+| Fase 2 — Creación Interna | ✅ Solicitudes creadas por Coordinador/Admin mediante `POST /api/solicitudes` se guardan con origen `PUBLICO` y `organizacion_nombre`. Las creadas por Cliente usan origen `CLIENTE` con su `organizacion_id`. |
+| Fase 2 — Frontend | ✅ Primitivos locales con Tailwind CSS. Vistas de `Bandeja.tsx` y `Detalle.tsx` con modales interactivos para capturar datos requeridos según la transición. |
+| Fase 2 — Demo Seed | ✅ `seeds/003_usuarios_demo.sql` con Admin, Coordinador y 2 Clientes (contraseña: `Demo1234!`). |
 
 ---
 
-## 1. Fases
+## 1. Fases del Proyecto
 
 | Fase | Rama | Estado | Entregable |
 |---|---|---|---|
 | 0 | `feature/landing-page` | ✅ Mergeada | Landing cerrada: fix visual, header responsive, build/lint, commit |
 | 1 | `feature/api-public-flow` | ✅ Implementada | Backend base + formulario público + seguimiento por token |
-| 2 | `feature/auth-coordinator` | 🔧 En curso | Login, sesiones, RBAC, bandeja y revisión del coordinador |
-| 3 | `feature/technician-client` | ❌ Pendiente | Intervenciones del técnico, portal del cliente y dashboard |
-| 4 | `feature/qa-demo` | ❌ Pendiente | Suite completa, seed definitivo, README y guion de demo |
-
-Racional: el riesgo del P0 está en el ciclo de la solicitud, no en la landing. El flujo público es la única parte sin autenticación y valida de una vez PostgreSQL, Express, adjuntos, tokens, rate limiting y SSE.
+| 2 | `feature/auth-coordinator` | ✅ Completada | Login, sesiones, RBAC, REST estricto, FSM unificada, bandeja y triaje del coordinador |
+| 3 | `feature/technician-client` | 🔄 Planificada | Asignación (agenda, franjas, SLA), intervenciones del técnico, portal del cliente, adjuntos y dashboard |
+| 4 | `feature/qa-demo` | ⏳ Pendiente | Suite completa (12 grupos de pruebas), seed definitivo con 15 casos, README y guion de demo |
 
 ---
 
-## 2. Fase 0 — Cierre de la landing
+## 2. Fase 0 — Cierre de la Landing (Completada)
 
-### 2.1. Correcciones
+1. `web/src/app/pages/Inicio.tsx`: corrección visual de tokens de color (`bg-lavanda-honda`).
+2. `web/src/components/SiteHeader.tsx`: cabecera responsive simple sin JavaScript adicional.
+3. Verificación de build y lint en frontend (`npm run lint` y `npm run build`).
 
-1. `web/src/app/pages/Inicio.tsx`: cambiar `bg-papel-honda` por `bg-lavanda-honda` (el tema define `lavanda-honda`; la sección "Cómo funciona" queda sin fondo).
-2. `web/src/components/SiteHeader.tsx`: header responsive simple; en pantallas pequeñas el logo y la navegación se acomodan en dos filas (`flex-col` + `gap` con breakpoint `sm:`). Sin hamburguesa ni JavaScript.
+---
 
-### 2.2. Verificación
+## 3. Fase 1 — Flujo Público y Base del Backend (Completada)
 
-```bash
-cd web && npm run lint
-cd web && npm run build
-```
+- Estructura base de `api/`: configuración con dotenv, pool de `pg`, Swagger en `/api/docs`.
+- Base de datos: migración inicial `001_esquema.sql` (esquema completo) y `002_seed_catalogos.sql` (especialidades, categorías, reglas SLA).
+- Endpoints públicos:
+  - `GET /api/public/categorias`: categorías activas con especialidad requerida.
+  - `POST /api/public/solicitudes`: multipart con validación de magic bytes para adjuntos, persistencia fuera del web root en `uploads/`, código secuencial `SOL-YYYY-XXXXX`, token de 32 bytes y rate limit de 5/hora por IP.
+  - `GET /api/public/seguimiento/:token`: vista pública aislada (sin notas, contacto ni resolución).
+  - `GET /api/public/seguimiento/:token/eventos`: canal SSE de seguimiento público.
+- Frontend público: `/solicitar`, `/seguimiento/:token`, `/servicios`, `/planes`, `/contacto`.
 
-### 2.3. Git
+---
 
-```bash
-gh repo create servigest --public --source=. --remote=origin
-git push -u origin main
-git add web            # node_modules y dist ya están ignorados
-git commit -m "feat(landing): add public landing page"
-git push -u origin feature/landing-page
-gh pr create --base main --title "feat(landing): add public landing page"
-```
+## 4. Fase 2 — Autenticación, RBAC y Coordinación (Completada)
 
-### 2.4. Post-merge
+### 4.1. Módulo `auth` y Middlewares
+- Rutas: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `PATCH /api/auth/password`.
+- Seguridad: hash SHA-256 de tokens de sesión en BD, cookie httpOnly `SameSite=Lax`, CSRF obligatorio en mutaciones (`X-CSRF-Token`), bloqueo de 15 min tras 5 intentos fallidos de login.
+- Middlewares: `autenticar` (valida sesión activa), `exigirCsrf` (valida token CSRF), `soloRoles(...roles)` (control de acceso por rol).
 
-```bash
-git checkout main
-git pull
-git branch -d feature/landing-page
+### 4.2. Módulo `solicitudes` (REST Estricto y FSM Declarativa)
+- **Endpoints unificados:**
+  | Método | Ruta | Roles | Descripción |
+  |---|---|---|---|
+  | GET | `/api/solicitudes` | ADMIN, COORDINADOR, TECNICO, CLIENTE | Listado paginado con filtros. Cliente filtra automáticamente por `organizacion_id`; Técnico por `tecnico_id`. |
+  | POST | `/api/solicitudes` | ADMIN, COORDINADOR, CLIENTE | Creación interna. Si es interno: origen `PUBLICO` + `organizacion_nombre`. Si es Cliente: origen `CLIENTE` + `organizacion_id`. |
+  | GET | `/api/solicitudes/:id` | ADMIN, COORDINADOR, TECNICO, CLIENTE | Detalle. Cliente y Técnico ajenos reciben `404`. Cliente no recibe notas ni eventos de auditoría. |
+  | PATCH | `/api/solicitudes/:id/estado` | ADMIN, COORDINADOR, CLIENTE | Transición de estado (`{ estado, ...datos }`). |
+  | POST | `/api/solicitudes/:id/token` | ADMIN | Regeneración de token público (subrecurso administrativo). |
+  | GET | `/api/solicitudes/:id/eventos` | ADMIN, COORDINADOR | Historial de auditoría append-only. |
+  | GET | `/api/solicitudes/:id/notas` | ADMIN, COORDINADOR, TECNICO | Listado de notas internas (técnico solo si está asignado). |
+  | POST | `/api/solicitudes/:id/notas` | ADMIN, COORDINADOR, TECNICO | Creación de nota interna (`INTERNA` o `SOLICITUD_INFORMACION`). |
+
+- **Motor de Transiciones:**
+  - `TRANSICIONES`: tabla de configuración declarativa con `roles`, `tipoEvento`, `validar()` y `aplicar()`.
+  - Transacciones atómicas con bloqueo pesimista `SELECT ... FOR UPDATE OF s`.
+  - `eventos_solicitud` append-only insertado en la misma transacción.
+  - Emisión de SSE `solicitud.estado` estrictamente **post-commit** (fuera de `conTransaccion`).
+  - Transiciones de Fase 2 operativas:
+    - `RECIBIDA → EN_REVISION` (Coordinador, Admin).
+    - `EN_REVISION → REQUIERE_INFORMACION` (Coordinador, Admin; nota obligatoria).
+    - `REQUIERE_INFORMACION → EN_REVISION` (Coordinador, Admin; nota obligatoria de gestión).
+    - `EN_REVISION → APROBADA` (Coordinador, Admin; prioridad obligatoria, SLA congelado y constancia si es público).
+    - `EN_REVISION / REQUIERE_INFORMACION → RECHAZADA` (Coordinador, Admin; motivo obligatorio).
+    - `Cualquiera no terminal → CANCELADA` (Cliente antes de APROBADA; Coordinador/Admin en cualquier no terminal; motivo obligatorio).
+
+### 4.3. Frontend y Verificación
+- UI implementada en `web/src/app/pages/solicitudes/` (`Bandeja.tsx`, `Detalle.tsx`) con modales contextuales por acción.
+- Pruebas automatizadas en `api/tests/`: 65 pruebas superadas (100% éxito en suites `auth`, `solicitudes`, `public`, `sse`).
+- Build de producción frontend (`web`): `tsc -b && vite build` sin errores.
+
+---
+
+## 5. Fase 3 — Técnico, Cliente, Intervenciones y Dashboard (Plan Detallado)
+
+**Rama:** `feature/technician-client`  
+**Objetivo:** Completar el ciclo de vida operativo de la solicitud (`APROBADA → ASIGNADA → EN_PROCESO → RESUELTA → CERRADA`), habilitar las intervenciones técnicas con evidencias, crear el portal del cliente, implementar los CRUDs de administración de catálogos y desplegar el dashboard operativo con métricas de SLA.
+
+```mermaid
+flowchart LR
+    subgraph Fase2["Fase 2 (Completada)"]
+        REC[RECIBIDA] --> REV[EN_REVISION]
+        REV <--> REQ[REQUIERE_INFO]
+        REV --> RECH[RECHAZADA]
+        REV --> APR[APROBADA]
+    end
+
+    subgraph Fase3["Fase 3 (Objetivo)"]
+        APR -->|Asignar Técnico + Agenda| ASIG[ASIGNADA]
+        ASIG -->|Reasignar con Motivo| ASIG
+        ASIG -->|Técnico inicia intervención| PROC[EN_PROCESO]
+        PROC -->|Técnico resuelve intervención| RES[RESUELTA]
+        RES -->|Coordinador cierra con resolución| CERR[CERRADA]
+    end
+
+    classDef f2 fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
+    classDef f3 fill:#dbeafe,stroke:#2563eb,stroke-width:2px;
+    class REC,REV,REQ,RECH,APR f2;
+    class ASIG,PROC,RES,CERR f3;
 ```
 
 ---
 
-## 3. Fase 1 — Backend + flujo público (rama `feature/api-public-flow`)
+### 5.1. Backend — Módulo de Asignación y Reasignación
 
-### 3.1. Esqueleto `api/`
+Se integra en el motor de transiciones de `api/src/modules/solicitudes/service.js` vía `PATCH /api/solicitudes/:id/estado`:
 
-```
-api/
-  src/
-    config/          # entorno (env validado), pool pg, Swagger
-    middlewares/     # errores uniformes, rate limit, (auth/csrf quedan para fase 2)
-    modules/
-      public/        # routes, controller, service, repository
-      catalogos/     # lectura de categorías para el sitio
-      eventos/       # emisor SSE
-    db/              # pool, transacciones, runner de migraciones
-  migrations/        # 001_esquema.sql, 002_seed_catalogos.sql
-  seeds/
-  tests/
-  Dockerfile
-  package.json
+#### Transiciones:
+- `APROBADA → ASIGNADA`
+- `ASIGNADA → ASIGNADA` (Reasignación)
+
+#### Payload esperado:
+```json
+{
+  "estado": "ASIGNADA",
+  "tecnicoId": "uuid-del-tecnico",
+  "fechaProgramada": "2026-11-20T14:00:00.000Z",
+  "motivo": "Texto obligatorio solo en reasignación"
+}
 ```
 
-Principios: SQL puro con `pg` (sin ORM), consultas parametrizadas, reglas de negocio en `service`, SQL en `repository`.
-
-### 3.2. Infraestructura
-
-- `docker-compose.yml` en la raíz: servicios `db` (PostgreSQL 16), `api` y `web`; volúmenes para datos y `uploads/`.
-- `.env.example` con todas las variables (`DATABASE_URL`, `PORT`, `UPLOAD_DIR`, `SESSION_SECRET` de cara a fase 2).
-- Health check: `GET /api/health`.
-- Swagger en `/api/docs`.
-
-### 3.3. Migraciones
-
-`001_esquema.sql` con el esquema completo del acuerdo (todas las tablas, no solo las de esta fase):
-
-- Extensiones: `pgcrypto`, `citext`.
-- Enums: `rol_usuario`, `origen_solicitud`, `estado_solicitud`, `prioridad`, `tipo_nota`, `tipo_evento`.
-- Tablas: `organizaciones`, `usuarios`, `sesiones`, `especialidades`, `tecnicos`, `tecnico_especialidad`, `categorias_servicio`, `disponibilidad`, `solicitudes`, `intervenciones`, `adjuntos`, `notas_solicitud`, `eventos_solicitud`, `sla_reglas`.
-- Índices y restricciones según `docs/acuerdo-diseno.md` (incluido el índice único parcial para una sola intervención abierta).
-
-`002_seed_catalogos.sql` (idempotente): especialidades (Redes, Servidores, Soporte, Seguridad, Respaldo), categorías con especialidad requerida, reglas SLA (CRITICA 4, ALTA 8, MEDIA 24, BAJA 72).
-
-### 3.4. Endpoints públicos
-
-| Método | Ruta | Notas |
-|---|---|---|
-| GET | `/api/public/categorias` | Categorías activas con su especialidad |
-| POST | `/api/public/solicitudes` | Multipart con adjuntos; valida campos, MIME real (magic bytes), tamaño ≤ 5 MB, máx. 5 archivos |
-| GET | `/api/public/seguimiento/:token` | Estado y datos de coordinación; sin contacto, notas, adjuntos ni resolución |
-| GET | `/api/public/seguimiento/:token/eventos` | SSE; solo cambios de estado y coordinación |
-
-Comportamiento de `POST /api/public/solicitudes`:
-
-1. Validar campos en el servidor (nombre organización, contacto, email, teléfono, categoría, descripción; ubicación condicional).
-2. Generar `token_publico` (32 bytes aleatorios base64url) y `codigo` `SOL-<año>-<secuencia>`.
-3. Guardar solicitud con `origen='PUBLICO'`, `estado='RECIBIDA'`.
-4. Escribir archivos con nombre UUID en `uploads/` (fuera del web root) y metadatos en `adjuntos`.
-5. Registrar evento `CREACION` en `eventos_solicitud` (misma transacción).
-6. Emitir `solicitud.creada` por el canal de coordinación.
-7. Devolver `201` con `codigo` y `token` (la URL de seguimiento la arma el frontend).
-8. Rate limit: 5 solicitudes por hora e IP.
-
-Respuesta de seguimiento: `codigo`, `estado`, `prioridad`, `fechaCreacion`, `fechaObjetivo`, `tecnicoAsignado`, `fechaProgramada`.
-
-### 3.5. Frontend
-
-| Ruta | Contenido |
-|---|---|
-| `/servicios` | Categorías desde `GET /api/public/categorias` |
-| `/planes` | Contenido informativo estático |
-| `/solicitar` | Formulario completo con adjuntos; al enviar, pantalla de confirmación con código y enlace al seguimiento |
-| `/seguimiento/:token` | Estado + timeline de coordinación, suscrito a SSE con reconexión y refetch |
-| `/contacto` | Estático |
-
-Cliente HTTP en `web/src/lib/` con manejo de errores uniforme (`{ error: { code, message, details } }`).
-
-### 3.6. Pruebas (Jest + Supertest, PostgreSQL de prueba)
-
-1. Creación pública feliz → `201`, código con formato, token no predecible, evento de auditoría.
-2. Validaciones: campos faltantes, categoría inexistente, email inválido.
-3. Adjuntos: MIME no permitido, > 5 MB, más de 5 archivos.
-4. Rate limit: sexta solicitud en la hora → 429.
-5. Seguimiento: token válido devuelve solo campos públicos; token inválido → 404.
-6. SSE: evento emitido al crear y al cambiar estado.
-7. Aislamiento: el payload de seguimiento nunca incluye contacto, notas ni resolución.
-
-### 3.7. Criterio de aceptación de la fase
-
-- `docker compose up --build` levanta db + api + web.
-- Un visitante envía una solicitud con adjuntos, recibe código y token, y ve el estado en `/seguimiento/:token` actualizándose en vivo.
-- Los datos quedan persistidos en PostgreSQL y auditados en `eventos_solicitud`.
-- `npm test` (api) y `npm run build` (web) pasan.
+#### Motor de Validación de Asignación (Secuencia Estricta de 6 Pasos):
+1. **Estado válido:** Solicitud en `APROBADA` o `ASIGNADA` (bloqueada con `FOR UPDATE`).
+2. **Técnico activo:** Existe en `tecnicos` y `usuarios`, con rol `TECNICO` y `activo = true` en ambas tablas.
+3. **Especialidad requerida:** Si la categoría de la solicitud tiene `especialidad_requerida_id IS NOT NULL`, verificar que el técnico posea esa especialidad en `tecnico_especialidad`. Si no la tiene: error `422 ESPECIALIDAD_NO_COINCIDE`.
+4. **Franja horaria activa:** Convertir `fechaProgramada` a hora local de `America/Guayaquil`:
+   - Extraer `dia_semana` (1=lunes ... 7=domingo) y hora del día.
+   - Debe coincidir con un registro activo en `disponibilidad` (`hora_inicio <= hora < hora_fin`). Si no: error `422 FUERA_DE_DISPONIBILIDAD`.
+5. **Sin solapamiento (Choque de agenda):** Verificar que el técnico no tenga otra solicitud en estado `ASIGNADA` o `EN_PROCESO` cuya `fecha_hora_programada` esté dentro de un rango de ±1 hora respecto a la nueva fecha. Si choca: error `422 CHOQUE_HORARIO`.
+6. **Cumplimiento de SLA:** 
+   $$\text{fechaProgramada} \le \text{fecha\_objetivo}$$
+   Si se programa posterior al objetivo de SLA: error `422 FECHA_SUPERA_SLA`.
+7. **Reasignación:** Si el estado actual es `ASIGNADA`, el campo `motivo` es obligatorio ($\ge 5$ caracteres). Tipo de evento de auditoría: `REASIGNACION` (en asignación inicial es `ASIGNACION`). Si la intervención ya comenzó (`EN_PROCESO`), la reasignación está prohibida.
 
 ---
 
-## 4. Fase 2 — Auth + Coordinador (rama `feature/auth-coordinator`)
+### 5.2. Backend — Módulo de Intervenciones (`api/src/modules/intervenciones`)
 
-### 4.1. Objetivos de la fase
+Se crea el módulo `intervenciones` con arquitectura modular (`routes.js`, `controller.js`, `service.js`, `repository.js`).
 
-Habilitar el acceso autenticado al portal interno e implementar el ciclo completo de revisión y aprobación de solicitudes por parte del Coordinador y el Admin. Al final de la fase, un coordinador debe poder: iniciar sesión, ver la bandeja de solicitudes, revisarlas, aprobarlas (con prioridad y SLA) o rechazarlas, y recibir actualizaciones en tiempo real por SSE.
-
-### 4.2. Backend — Módulo `auth`
-
-**Archivos:** `src/modules/auth/routes.js`, `controller.js`, `service.js`, `repository.js`
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| POST | `/api/auth/login` | Verifica credenciales, registra sesión en `sesiones` con SHA-256 del token, establece cookie `sg_session` httpOnly SameSite=Lax. Bloquea 15 min tras 5 intentos fallidos (`intentos_fallidos`, `bloqueado_hasta`). |
-| POST | `/api/auth/logout` | Marca `revocada_en = now()` en la sesión activa. Limpia la cookie. |
-| GET | `/api/auth/me` | Devuelve `{ id, nombre, email, rol, organizacionId }` y el token CSRF. Requiere sesión activa. |
-| PATCH | `/api/auth/password` | Cambia contraseña propia. Verifica contraseña actual antes de guardar el nuevo hash bcrypt coste 12. |
-
-**Lógica de sesión:**
-- Token de sesión: `crypto.randomBytes(32).toString('hex')`. Solo se guarda `sha256(token)` en `sesiones.token_hash`.
-- Cookie: nombre `sg_session`, valor = token en crudo, `httpOnly`, `SameSite=Lax`, `Secure` en producción, `Path=/`, `maxAge` = 12 h.
-- En cada petición autenticada: actualizar `last_seen_at`.
-- Expiración absoluta de 12 horas desde `created_at`; verificar `expira_en` y `revocada_en IS NULL`.
-
-### 4.3. Backend — Middlewares nuevos
-
-**Archivos:** `src/middlewares/auth.js`, `csrf.js`, `roles.js`
-
-| Middleware | Descripción |
-|---|---|
-| `autenticar` | Lee cookie `sg_session`, busca sesión activa en BD, hidrata `req.usuario`. Responde `401` si no hay sesión válida. |
-| `exigirCsrf` | En POST, PUT, PATCH, DELETE: verifica que `X-CSRF-Token` del header coincida con `sesiones.csrf_secret`. Responde `403` si falla. |
-| `soloRoles(...roles)` | Factory que genera un middleware que rechaza con `403` si `req.usuario.rol` no está en la lista permitida. |
-
-### 4.4. Backend — Módulo `solicitudes` (transiciones del coordinador)
-
-**Archivos:** `src/modules/solicitudes/routes.js`, `controller.js`, `service.js`, `repository.js`
-
-| Método | Ruta | Rol | Transición |
+#### Endpoints:
+| Método | Ruta | Roles | Descripción |
 |---|---|---|---|
-| GET | `/api/solicitudes` | Interno + Cliente | Listado con filtros y paginación. Cliente filtra por `organizacion_id` automáticamente. |
-| POST | `/api/solicitudes` | Cliente, Coordinador, Admin | Crea solicitud `origen='CLIENTE'` vinculada a `organizacion_id` del usuario en sesión. |
-| GET | `/api/solicitudes/:id` | Interno + Cliente propietario | Detalle según rol. Cliente no recibe `notas`, `eventos` ni campos internos. |
-| POST | `/api/solicitudes/:id/revision` | Coordinador, Admin | `RECIBIDA → EN_REVISION` |
-| POST | `/api/solicitudes/:id/solicitar-informacion` | Coordinador, Admin | `EN_REVISION → REQUIERE_INFORMACION` + nota interna obligatoria |
-| POST | `/api/solicitudes/:id/aprobar` | Coordinador, Admin | `EN_REVISION / REQUIERE_INFORMACION → APROBADA` + prioridad + constancia si es PÚBLICO |
-| POST | `/api/solicitudes/:id/rechazar` | Coordinador, Admin | `EN_REVISION / REQUIERE_INFORMACION → RECHAZADA` + motivo obligatorio |
-| POST | `/api/solicitudes/:id/cancelar` | Cliente propietario (antes APROBADA), Coordinador, Admin | `→ CANCELADA` + motivo obligatorio |
-| GET | `/api/solicitudes/:id/eventos` | Coordinador, Admin | Historial de auditoría de la solicitud |
-| POST | `/api/solicitudes/:id/notas` | Coordinador, Admin | Crea nota interna (`tipo=INTERNA` o `SOLICITUD_INFORMACION`) |
-| GET | `/api/solicitudes/:id/notas` | Coordinador, Admin | Lista notas internas |
-| POST | `/api/solicitudes/:id/regenerar-token` | Admin | Genera nuevo `token_publico` y audita `REGENERACION_TOKEN` |
+| GET | `/api/solicitudes/:id/intervenciones` | ADMIN, COORDINADOR, TECNICO, CLIENTE | Lista intervenciones de la solicitud (Cliente ve diagnóstico/resultado; no ve notas internas). |
+| POST | `/api/solicitudes/:id/intervenciones` | TECNICO | Inicia intervención. Transiciona la solicitud a `EN_PROCESO`. |
+| PATCH | `/api/intervenciones/:id` | TECNICO | Resuelve intervención (cierre). Transiciona la solicitud a `RESUELTA`. |
 
-**Lógica transversal de cada transición:**
-1. `BEGIN` + `SELECT id FROM solicitudes WHERE id = $1 FOR UPDATE` (bloqueo de fila).
-2. Verificar `estado` actual; rechazar si la transición no es válida.
-3. Verificar rol y permisos adicionales (organización en caso del Cliente).
-4. Aplicar cambios en `solicitudes`.
-5. Insertar en `eventos_solicitud` (mismo `client` de transacción).
-6. `COMMIT`.
-7. Emitir evento SSE.
+#### Reglas de Negocio de Intervenciones:
+- **Iniciar Intervención (`ASIGNADA → EN_PROCESO`):**
+  - Solo el técnico asignado (`solicitud.tecnico_id === usuario.id`).
+  - Inserta en `intervenciones` con `inicio = now()` (o fecha manual válida), `fin = NULL`.
+  - La base de datos garantiza **una sola intervención abierta por solicitud** mediante índice único parcial:
+    ```sql
+    CREATE UNIQUE INDEX intervenciones_una_abierta_idx ON intervenciones (solicitud_id) WHERE fin IS NULL;
+    ```
+  - Actualiza la solicitud a `estado = 'EN_PROCESO'`.
+  - Audita evento `INTERVENCION_INICIO`.
+- **Resolver Intervención (`EN_PROCESO → RESUELTA`):**
+  - Solo el técnico de la intervención activa.
+  - Payload obligatorio:
+    ```json
+    {
+      "fin": "2026-11-20T16:30:00.000Z",
+      "diagnostico": "Falla en fuente de poder por fluctuación eléctrica.",
+      "actividades": "Reemplazo de fuente de 650W y prueba de estrés.",
+      "resultado": "Equipo operativo y entregado conforme al usuario.",
+      "observaciones": "Se recomienda instalar regulador de voltaje."
+    }
+    ```
+  - Validación: `fin > inicio`. Diagnóstico, actividades y resultado no vacíos.
+  - Actualiza la intervención registrando `fin`, diagnóstico, actividades y resultado.
+  - Actualiza la solicitud a `estado = 'RESUELTA'`, `resuelta_en = fin`, y copia `resultado` en `solicitudes.resolucion`.
+  - Audita evento `INTERVENCION_FIN` y `CAMBIO_ESTADO`.
 
-**Cálculo de SLA al aprobar:**
-```js
-const regla = await obtenerSlaRegla(prioridad); // consulta sla_reglas
-const fechaObjetivo = new Date(aprobadaEn.getTime() + regla.horas * 3600 * 1000);
+#### Transición a Cierre (`RESUELTA → CERRADA`):
+- Se ejecuta vía `PATCH /api/solicitudes/:id/estado` con `{ estado: 'CERRADA' }`.
+- Roles: `ADMIN`, `COORDINADOR`.
+- Validación: La solicitud debe tener `resolucion IS NOT NULL`.
+- Actualiza: `cerrada_por = usuario.id`, `cerrada_en = now()`.
+- Audita evento `CIERRE`. Estado terminal (sin reapertura).
+
+---
+
+### 5.3. Backend — Módulo de Adjuntos Autenticados (`api/src/modules/adjuntos`)
+
+Arquitectura de subida segura y almacenamiento privado fuera del web root (`uploads/`).
+
+#### Endpoints:
+| Método | Ruta | Roles | Descripción |
+|---|---|---|---|
+| POST | `/api/solicitudes/:id/adjuntos` | ADMIN, COORDINADOR, TECNICO, CLIENTE | Sube adjunto a una solicitud. |
+| POST | `/api/intervenciones/:id/adjuntos` | TECNICO | Sube evidencia fotográfica o técnica a una intervención. |
+| GET | `/api/adjuntos/:id/descargar` | Según visibilidad | Descarga de archivo protegida con streaming y cabeceras seguras. |
+
+#### Reglas de Adjuntos:
+- Límite de 5 adjuntos por solicitud y 5 por intervención.
+- Límite de 5 MB por archivo.
+- Tipos permitidos: `image/jpeg`, `image/png`, `application/pdf`. Validación estricta por *magic bytes* (sin confiar en la extensión enviada por el cliente).
+- Guardado en disco con nombre UUID sin extensión ejecutable.
+- **Autorización de descarga:** Un usuario con rol `CLIENTE` solo puede descargar adjuntos de solicitudes de su organización. Si intenta descargar un adjunto ajeno: responder **`404`**.
+
+---
+
+### 5.4. Backend — Administración de Catálogos y Entidades
+
+Endpoints de administración protegidos para `ADMIN` (y consulta para `COORDINADOR`).
+
+#### Módulos:
+1. **`organizaciones` (`/api/organizaciones`):** CRUD de clientes corporativos (RUC único, razón social, dirección, teléfono).
+2. **`usuarios` (`/api/usuarios`):** Creación y edición de usuarios internos y clientes. Validación de email único (`citext`) y hash bcrypt.
+3. **`tecnicos` (`/api/tecnicos`):**
+   - Habilitar técnico vinculado a usuario con rol `TECNICO`.
+   - Asignación de especialidades (`POST/DELETE /api/tecnicos/:id/especialidades`).
+   - Gestión de franjas de disponibilidad semanal (`/api/tecnicos/:id/disponibilidad`), validando que `hora_inicio < hora_fin` y sin solapamiento en el mismo día.
+4. **`especialidades` y `categorias_servicio` (`/api/catalogos/...`):**
+   - Configuración de categorías y su especialidad requerida.
+5. **Regla general de eliminación:** Catálogos y usuarios se desactivan lógicamente (`activo = false`); no se permite `DELETE` físico si tienen relaciones en base de datos.
+
+---
+
+### 5.5. Backend — Dashboard Operativo (`api/src/modules/dashboard`)
+
+Endpoint de métricas operativas calculadas en tiempo real directamente desde PostgreSQL (sin base de datos analítica externa).
+
+#### Ruta:
+- `GET /api/dashboard`:
+  - Si el rol es `ADMIN` o `COORDINADOR`: métricas globales de toda la operación.
+  - Si el rol es `CLIENTE`: métricas estrictamente filtradas por `solicitudes.organizacion_id = usuario.organizacionId`.
+
+#### Métricas Calculadas:
+1. **Distribución por estado:** Conteo agrupado de solicitudes activas y cerradas.
+2. **Cumplimiento de SLA:**
+   - Solicitudes a tiempo (`fecha_objetivo >= now()`).
+   - Próximas a vencer (no terminales con `fecha_objetivo` dentro de las próximas 24 horas).
+   - Vencidas (no terminales con `fecha_objetivo < now()`).
+3. **Carga operativa por técnico:** Conteo de solicitudes en `ASIGNADA` y `EN_PROCESO` asignadas a cada técnico activo.
+4. **Tiempo medio de resolución (MTTR):** Promedio de horas transcurridas entre `aprobada_en` y `resuelta_en` en el último mes.
+
+---
+
+### 5.6. Backend — Canal SSE de Técnicos
+
+- `GET /api/eventos/tecnico`:
+  - Autenticado, rol `TECNICO`.
+  - Filtra y emite eventos en tiempo real destinados al técnico en sesión:
+    - `solicitud.asignada`
+    - `solicitud.reasignada`
+  - Heartbeat cada 25 segundos.
+
+---
+
+### 5.7. Frontend — Vistas y Componentes de la Fase 3
+
+Se incorporan las pantallas del portal según el rol autenticado:
+
+```
+web/src/app/pages/
+├── solicitudes/
+│   ├── Bandeja.tsx            # Actualizar con pestañas por rol
+│   └── Detalle.tsx            # Modales de asignación, intervención, cierre y adjuntos
+├── tecnico/
+│   └── MiAgenda.tsx           # Vista del técnico con solicitudes asignadas y botón "Iniciar"
+├── cliente/
+│   └── SolicitarCliente.tsx   # Formulario corporativo simplificado
+├── admin/
+│   ├── Usuarios.tsx           # CRUD de usuarios y roles
+│   ├── Organizaciones.tsx     # CRUD de clientes corporativos
+│   ├── Tecnicos.tsx           # Gestión de técnicos, especialidades y franjas
+│   └── Categorias.tsx         # Catálogo de servicios y especialidades
+└── Dashboard.tsx              # Tarjetas de KPI, barras de SLA y alertas operativas
 ```
 
-### 4.5. Backend — Canal SSE de coordinación
-
-**Archivo:** `src/modules/eventos/routes.js` (ya tiene el emisor; agregar la ruta autenticada)
-
-- `GET /api/eventos/coordinacion`: autenticación con cookie, roles `ADMIN` y `COORDINADOR`.
-- Emite: `solicitud.creada`, `solicitud.estado`, `solicitud.asignada`, `solicitud.reasignada`, `solicitud.cerrada`.
-- Heartbeat cada 25 s. Sin persistencia.
-
-### 4.6. Frontend — Autenticación
-
-**Archivos nuevos en `web/src/`:**
-- `lib/auth.tsx`: contexto `AuthContext` con `{ usuario, login, logout, loading }`. Hook `useAuth()`.
-- `app/layouts/AppLayout.tsx`: layout del portal con sidebar de navegación (ítems según rol), header con nombre del usuario y botón logout.
-- `app/pages/Login.tsx`: formulario con email y contraseña; manejo de errores `CREDENCIALES_INVALIDAS` y `CUENTA_BLOQUEADA`.
-
-**Rutas del portal (agregar a `App.tsx`):**
-- `/login` → `Login.tsx`
-- `/app/*` → protegido con `RequireAuth` (redirige a `/login` si no hay sesión).
-
-### 4.7. Frontend — Bandeja del Coordinador/Admin
-
-**Archivos:**
-- `app/pages/solicitudes/Bandeja.tsx` → ruta `/app/solicitudes`
-- `app/pages/solicitudes/Detalle.tsx` → ruta `/app/solicitudes/:id`
-
-**Bandeja (`/app/solicitudes`):**
-- Tabla paginada con columnas: Código, Origen, Categoría, Estado (badge de color), Prioridad, Fecha, Técnico asignado.
-- Filtros en barra lateral o superior: `estado`, `prioridad`, `origen`, `desde`/`hasta`, búsqueda por texto.
-- Conexión SSE al canal de coordinación: actualización en vivo sin recarga.
-
-**Detalle (`/app/solicitudes/:id`):**
-- Datos del solicitante y la solicitud.
-- Timeline de eventos (historial de auditoría, solo Admin/Coordinador).
-- Panel de notas internas.
-- Panel de acciones: botones visibles según el `estado` actual y el `rol` del usuario:
-
-| Estado actual | Botones visibles (Coordinador/Admin) |
-|---|---|
-| `RECIBIDA` | "Poner en revisión" |
-| `EN_REVISION` | "Solicitar información", "Aprobar", "Rechazar", "Cancelar" |
-| `REQUIERE_INFORMACION` | "Volver a revisión", "Aprobar", "Rechazar", "Cancelar" |
-| `APROBADA` | "Asignar" *(implementado en Fase 3)*, "Cancelar" |
-| `RESUELTA` | "Cerrar" *(implementado en Fase 3)* |
-
-Cada botón abre un modal con el formulario mínimo necesario (prioridad, motivo, constancia, etc.).
-
-### 4.8. Pruebas de la Fase 2 (Jest + Supertest)
-
-1. **Auth:** login correcto → cookie + CSRF; credenciales inválidas → `401`; 5 intentos → bloqueo 15 min; petición sin cookie → `401`; CSRF ausente en POST → `403`; logout revoca sesión.
-2. **Sesión expirada:** sesión con `expira_en` pasado → `401`.
-3. **Transiciones permitidas:** probar el camino feliz de cada transición documentada en la tabla 4.4.
-4. **Transiciones prohibidas:** estado incorrecto → `409 TRANSICION_INVALIDA`; rol sin permiso → `403`.
-5. **Aislamiento:** Cliente A no lee, cancela ni accede a solicitudes de Cliente B → `404`.
-6. **Cancelación del Cliente:** antes de `APROBADA` → `200`; después de `APROBADA` → `403`.
-7. **Aprobación sin constancia en origen público:** → `422`.
-8. **Auditoría:** cada transición genera un evento en `eventos_solicitud` con actor, tipo y estados.
-9. **SSE de coordinación:** emite evento al hacer cada transición; conexión sin autenticación → `401`.
-
-### 4.9. Criterio de aceptación de la Fase 2
-
-- Un Coordinador inicia sesión, ve la bandeja con las solicitudes existentes (creadas en la Fase 1), pone una en revisión, la aprueba con prioridad ALTA (SLA: 8 h) y la bandeja se actualiza en vivo por SSE.
-- Un Admin regenera el token de una solicitud pública y el evento queda en el historial.
-- Un Cliente intenta cancelar una solicitud de otra organización y recibe `404`.
-- `npm test` pasa con los 9 grupos de la sección 4.8.
-- `npm run build` del frontend pasa sin errores.
+1. **Flujo del Técnico en Frontend:**
+   - Nueva ruta `/app/agenda`: el técnico visualiza sus órdenes programadas.
+   - En el detalle de la solicitud: botón "Iniciar intervención" (pasa a `EN_PROCESO`).
+   - Al finalizar: formulario modal con diagnóstico, actividades, resultado y subida de fotos de evidencia técnica.
+2. **Flujo de Asignación en el Detalle (Coordinador):**
+   - En estado `APROBADA`: botón "Asignar técnico".
+   - Modal con selector de técnico (filtrado automáticamente por los que poseen la especialidad requerida), selector de fecha/hora dentro de las franjas de disponibilidad y validación visual de no conflicto con el SLA.
+3. **Portal del Cliente:**
+   - Menú simplificado: "Mis Solicitudes", "Nueva Solicitud" y "Dashboard de Servicio".
+   - Sin acceso a notas internas ni auditoría.
+4. **Dashboard:**
+   - Componente visual con métricas de SLA, tarjetas de estado y alertas de tickets vencidos o por vencer.
 
 ---
 
-## 5. Fases posteriores (resumen)
+### 5.8. Plan de Pruebas Automatizadas (Jest + Supertest)
 
-- **Fase 3 — Técnico + cliente + dashboard:** asignación con validaciones (especialidad, franja, choque, SLA), reasignación, intervenciones (iniciar + resolver), adjuntos autenticados, portal del cliente, CRUD de técnicos/organizaciones/usuarios/catálogos y dashboard con métricas.
-- **Fase 4 — QA y demo:** suite completa (12 grupos de pruebas), seed de demo con 15 solicitudes en todos los estados, README con guion de demostración y `.env.example` definitivo.
+Se agregarán las suites de prueba para cubrir los requerimientos críticos de la Fase 3:
+
+1. **Suite Asignación (`asignacion.test.js`):**
+   - Asignación exitosa: técnico activo, con especialidad y en franja horaria válida.
+   - Rechazo por técnico inactivo o con rol incorrecto → `422`.
+   - Rechazo por falta de especialidad requerida → `422`.
+   - Rechazo por fecha fuera de la franja de disponibilidad semanal → `422`.
+   - Rechazo por choque horario (solicitud en rango de ±1 hora) → `422`.
+   - Rechazo por fecha posterior al SLA (`fechaProgramada > fechaObjetivo`) → `422`.
+   - Reasignación con motivo obligatorio y actualización de agenda → `200`.
+   - Intento de reasignar una solicitud en `EN_PROCESO` → `409`.
+2. **Suite Intervenciones (`intervenciones.test.js`):**
+   - Inicio de intervención por técnico asignado → `201`, solicitud pasa a `EN_PROCESO`.
+   - Intento de inicio por técnico no asignado → `403`.
+   - Garantía de intervención única abierta: segundo inicio simultáneo falla → `409`.
+   - Resolución de intervención: registro de fin, diagnóstico y actividades → `200`, solicitud pasa a `RESUELTA`.
+   - Validación de consistencia: `fin <= inicio` falla → `400`.
+   - Cierre de solicitud por coordinador: requiere resolución documentada → `200`, pasa a `CERRADA`.
+3. **Suite Adjuntos (`adjuntos.test.js`):**
+   - Subida exitosa de PNG/PDF válido con persistencia en `uploads/`.
+   - Rechazo de archivo ejecutable disfrazado de imagen (falla magic bytes) → `400`.
+   - Rechazo de archivo > 5 MB → `400`.
+   - Límite de 5 adjuntos por entidad superado → `400`.
+   - Aislamiento: Cliente B intentando descargar adjunto de Cliente A → `404`.
+4. **Suite Dashboard y Aislamiento (`dashboard.test.js`):**
+   - Cálculo correcto de métricas de SLA (a tiempo, por vencer, vencidas).
+   - Aislamiento del Cliente: el payload del dashboard no contiene datos de otras organizaciones ni carga de técnicos ajenos.
 
 ---
 
-## 5. Reglas transversales (de `AGENTS.md`)
+### 5.9. Criterios de Aceptación de la Fase 3 (Definition of Done)
 
-- Flujo de ramas y PR según el skill `repo-workflow`: sin commit/push/PR salvo petición explícita.
-- Al aprobar un PR: `checkout main`, `pull`, borrar rama local con `-d`.
-- No implementar nada fuera de alcance (contratos, pagos, correo, notificaciones persistidas, reapertura, etc.).
-- Toda regla de negocio se valida en el backend; auditoría generada en la misma transacción.
-- Fechas en UTC (`timestamptz`), presentación en `America/Guayaquil`; API en español `camelCase`.
+- [ ] Un Coordinador asigna un técnico calificado a una solicitud aprobada respetando franjas y SLA.
+- [ ] El Técnico inicia sesión, ve su orden en `/app/agenda`, inicia la intervención (`EN_PROCESO`), sube fotos de evidencia y la resuelve documentando diagnóstico y actividades (`RESUELTA`).
+- [ ] El Coordinador revisa la resolución y cierra la solicitud (`CERRADA`).
+- [ ] Un Cliente consulta su portal y visualiza el progreso y la solución de su solicitud, sin acceso a notas internas ni datos ajenos.
+- [ ] El Dashboard muestra métricas operativas reales calculadas desde PostgreSQL.
+- [ ] Todas las transiciones y eventos quedan registrados en `eventos_solicitud`.
+- [ ] La suite de pruebas completa pasa en Jest (`npm test`) y el frontend compila sin errores de tipos (`npm run build`).

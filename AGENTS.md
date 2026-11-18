@@ -10,10 +10,14 @@ El diseño funcional y técnico ya está cerrado. La implementación empieza des
 
 ## 2. Fuentes de verdad
 
-1. `docs/acuerdo-diseno.md` — **prevalece** sobre cualquier otra fuente. Léelo completo antes de implementar un módulo.
-2. `servigest_mvp_p0.md` — especificación funcional original. Úsala como contexto, no como requisito literal cuando contradiga el acuerdo.
+1. `docs/plan-implementacion.md` — plan general por fases y decisiones de arquitectura.
+2. `docs/fase-3-plan.md` — plan detallado de la Fase 3 (técnico, cliente, intervenciones y dashboard).
 
-No cargues documentos adicionales de forma anticipada. Si una tarea exige una regla que no está en el acuerdo, detente y pregunta antes de inventarla.
+Ambos planes son fuentes de verdad. Si se contradicen entre sí, detente y pregunta antes de implementar; no elijas por iniciativa propia.
+
+`docs/acuerdo-diseno.md` — documento de diseño histórico. **No prevalece**: úsalo como contexto, no como requisito literal cuando contradiga los planes. `servigest_mvp_p0.md` — especificación funcional original; solo contexto.
+
+No cargues documentos adicionales de forma anticipada. Si una tarea exige una regla que no está en los planes, detente y pregunta antes de inventarla.
 
 ## 3. Stack y estructura
 
@@ -25,7 +29,7 @@ No cargues documentos adicionales de forma anticipada. Si una tarea exige una re
 | Frontend | React + Vite + TypeScript estricto |
 | UI | Tailwind CSS + shadcn/ui |
 | Tiempo real | SSE |
-| API | REST estricto: recursos en sustantivos, verbos HTTP (`GET`, `POST`, `PATCH`, `DELETE`), sin acciones en la URL salvo transiciones de estado del dominio |
+| API | REST estricto: recursos en sustantivos, verbos HTTP (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`), **sin acciones en la URL**. Las transiciones de estado se expresan como `PATCH /:id/estado` con el estado destino en el cuerpo; las acciones administrativas como subrecursos (`POST /:id/token`). `PUT` se reserva para reemplazos completos de una colección hija, por ejemplo `PUT /tecnicos/:id/especialidades`. |
 | Auth | Sesión en PostgreSQL + cookie httpOnly + CSRF |
 | Pruebas | Jest + Supertest |
 | Entorno | Docker Compose: `db`, `api`, `web` |
@@ -88,7 +92,7 @@ El backend aplica autorización en cada operación. Nunca confíes en que React 
 
 - Prioridad la fija el coordinador al aprobar; queda **congelada**. La urgencia del visitante es solo referencia.
 - `fecha_objetivo = aprobada_en + horas` según `sla_reglas` (crítica 4, alta 8, media 24, baja 72), en horas calendario.
-- Asignar exige: técnico activo, especialidad requerida por la categoría, fecha futura dentro de una franja de disponibilidad, sin choque horario y `fecha_hora_programada <= fecha_objetivo`.
+- Asignar exige: técnico activo, especialidad requerida por la categoría, fecha futura dentro de una franja de disponibilidad, sin choque horario (±1 hora respecto de otra solicitud `ASIGNADA` o `EN_PROCESO` del mismo técnico) y `fecha_hora_programada <= fecha_objetivo`.
 - Reasignación solo en `ASIGNADA`, con motivo auditado.
 - Si la intervención ya inició, no se reasigna: se resuelve o se cancela.
 
@@ -98,6 +102,15 @@ El backend aplica autorización en cada operación. Nunca confíes en que React 
 - Horas manuales; `fin > inicio`; sin costos.
 - `EN_PROCESO → RESUELTA` exige resolución documentada.
 - `CERRADA` solo la marca Coordinador/Admin y exige resolución.
+
+### API de Fase 3
+
+- Asignación y reasignación: `PATCH /solicitudes/:id/estado` con `{ estado: 'ASIGNADA', tecnicoId, fechaProgramada, motivo? }`; `motivo` es obligatorio al reasignar.
+- Intervenciones: `GET/POST /solicitudes/:id/intervenciones` y `PATCH /intervenciones/:id`.
+- Cierre: `PATCH /solicitudes/:id/estado` con `{ estado: 'CERRADA' }`.
+- Adjuntos: `POST /solicitudes/:id/adjuntos`, `POST /intervenciones/:id/adjuntos` y `GET /adjuntos/:id/descargar`. **No hay borrado de adjuntos en P0.**
+- Especialidades del técnico: `PUT /tecnicos/:id/especialidades` reemplaza el conjunto completo.
+- Dashboard: `GET /dashboard`. SSE del técnico: `GET /eventos/tecnico`.
 
 ### Auditoría y aislamiento
 
@@ -154,11 +167,11 @@ No implementes contratos, cobertura, sedes, activos, pagos, facturación, correo
 ## 10. Flujo de trabajo para agentes
 
 USA EL SKILL repo-workflow
-1. Lee `docs/acuerdo-diseno.md` y revisa el estado real del repositorio.
+1. Lee los planes (`docs/plan-implementacion.md` y, cuando aplique, `docs/fase-3-plan.md`) y revisa el estado real del repositorio.
 2. Identifica el módulo y las reglas afectadas antes de escribir código.
 3. Haz cambios pequeños y coherentes con la estructura existente.
 4. Ejecuta las pruebas y el build correspondientes.
-5. Si una decisión cambia, actualiza `docs/acuerdo-diseno.md` y este archivo **antes** de implementar.
+5. Si una decisión cambia, actualiza los planes y este archivo **antes** de implementar.
 6. No amplíes el alcance por iniciativa propia.
 
 ### Definition of done

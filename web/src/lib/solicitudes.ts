@@ -16,8 +16,10 @@ export interface Seguimiento {
 }
 
 export interface CreacionSolicitud {
+  id: string
   codigo: string
   token: string
+  estado: string
 }
 
 export interface Solicitud {

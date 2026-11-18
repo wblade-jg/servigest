@@ -3,16 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "migrate": "node src/db/migrar.js",
-    "seed": "node src/db/migrar.js --seed 002_seed_catalogos.sql",
+    "seed": "node src/db/migrar.js --seed 003_usuarios_demo.sql",
     "test": "jest --runInBand"
   },
   "jest": {
     "testEnvironment": "node",
-    "roots": ["<rootDir>/tests"]
+    "roots": [
+      "<rootDir>/tests"
+    ]
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.0.0",
     "express": "^5.2.1",
     "multer": "^2.0.2",

@@ -1,22 +1,29 @@
 'use strict'
 
-// Catálogos de lectura pública (fase 1); la administración llega en fases posteriores.
 const express = require('express')
-const { pool } = require('../../config/pool')
+const controlador = require('./controller')
+const { autenticar, exigirCsrf, soloRoles } = require('../../middlewares/autenticacion')
 
 const router = express.Router()
 
-router.get('/categorias', async (_req, res, siguiente) => {
-  try {
-    const { rows } = await pool.query(`
-      SELECT id, nombre, descripcion, orden,
-             especialidad_requerida_id AS "especialidadRequeridaId"
-      FROM categorias_servicio
-      WHERE activo = true
-      ORDER BY orden, nombre
-    `)
-    res.json({ data: rows })
-  } catch (error) { siguiente(error) }
-})
+// Todas las rutas de catálogos requieren autenticación y rol ADMIN.
+// Los métodos mutantes exigen CSRF.
+router.use(autenticar, exigirCsrf)
+router.use(soloRoles('ADMIN'))
+
+// Especialidades
+router.get('/especialidades', controlador.listarEspecialidades)
+router.get('/especialidades/:id', controlador.obtenerEspecialidadPorId)
+router.post('/especialidades', controlador.crearEspecialidad)
+router.patch('/especialidades/:id', controlador.actualizarEspecialidad)
+router.delete('/especialidades/:id', controlador.desactivarEspecialidad)
+
+// Categorías (administración)
+router.get('/categorias', controlador.listarCategorias)
+router.get('/categorias/admin', controlador.listarCategorias)
+router.get('/categorias/:id', controlador.obtenerCategoriaPorId)
+router.post('/categorias', controlador.crearCategoria)
+router.patch('/categorias/:id', controlador.actualizarCategoria)
+router.delete('/categorias/:id', controlador.desactivarCategoria)
 
 module.exports = router

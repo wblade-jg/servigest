@@ -74,7 +74,9 @@ CREATE INDEX sesiones_expira_idx ON sesiones (expira_en);
 CREATE TABLE especialidades (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   nombre text NOT NULL UNIQUE,
-  activo boolean NOT NULL DEFAULT true
+  activo boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE tecnicos (

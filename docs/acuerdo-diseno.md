@@ -10,9 +10,9 @@
 
 ## 1. Objetivo del documento
 
-Registrar las decisiones acordadas para construir el P0 de ServiGest, resolver las ambigüedades del documento funcional y dejar una referencia única para implementación, pruebas y demostración.
+Registrar las decisiones de diseño acordadas para construir el P0 de ServiGest y conservarlas como contexto histórico de implementación, pruebas y demostración.
 
-Cuando este documento y el documento funcional difieran, **prevalece este acuerdo** para el alcance del P0.
+Este documento **ya no prevalece**. Desde 2026-11-17 las fuentes de verdad son `docs/plan-implementacion.md` y `docs/fase-3-plan.md`; si hay contradicción, mandan los planes y este acuerdo solo aporta contexto.
 
 ---
 
@@ -518,6 +518,8 @@ El historial completo es visible solo para Admin y Coordinador. El Cliente ve ú
 
 ## 7. API REST
 
+> **Nota (2026-11-17):** las tablas de esta sección reflejan el diseño original y quedan **superadas** por `docs/plan-implementacion.md` y `docs/fase-3-plan.md`. Se corrigen aquí solo los puntos ya decididos para evitar contradicciones; ante cualquier diferencia, mandan los planes.
+
 Base: `/api`. Errores uniformes:
 
 ```json
@@ -559,18 +561,11 @@ El seguimiento devuelve: código, estado, prioridad, fecha de creación, fecha o
 | GET | `/solicitudes` | Internos y Cliente (filtrado por organización) |
 | POST | `/solicitudes` | Cliente (su organización), Coordinador, Admin |
 | GET | `/solicitudes/:id` | Internos y Cliente propietario |
-| POST | `/solicitudes/:id/revision` | Coordinador, Admin |
-| POST | `/solicitudes/:id/solicitar-informacion` | Coordinador, Admin |
-| POST | `/solicitudes/:id/aprobar` | Coordinador, Admin |
-| POST | `/solicitudes/:id/rechazar` | Coordinador, Admin |
-| POST | `/solicitudes/:id/asignar` | Coordinador, Admin |
-| POST | `/solicitudes/:id/reasignar` | Coordinador, Admin |
-| POST | `/solicitudes/:id/cancelar` | Cliente propietario, Coordinador, Admin |
-| POST | `/solicitudes/:id/cerrar` | Coordinador, Admin |
+| PATCH | `/solicitudes/:id/estado` | Transiciones de ciclo de vida (Coordinador, Admin; Cliente solo cancelación antes de aprobar) |
 | GET | `/solicitudes/:id/eventos` | Coordinador, Admin |
 | POST | `/solicitudes/:id/notas` | Coordinador, Admin, Técnico asignado |
 | GET | `/solicitudes/:id/notas` | Coordinador, Admin, Técnico asignado |
-| POST | `/solicitudes/:id/regenerar-token` | Admin |
+| POST | `/solicitudes/:id/token` | Regeneración de token público (Admin) |
 
 Filtros de listado: `estado`, `prioridad`, `categoria_id`, `tecnico_id`, `origen`, `desde`, `hasta`, `q`, `page`, `limit`, `orden`.
 
@@ -763,6 +758,8 @@ Estas decisiones no se votaron de forma explícita, pero se derivan de lo acorda
 8. **Reasignación:** solo en `ASIGNADA`; si la intervención ya inició, se resuelve o se cancela.
 9. **Catálogos:** se desactivan con `activo=false`; no se eliminan si están en uso.
 10. **Historial:** el Cliente no accede a `/solicitudes/:id/eventos`; solo ve estado y datos de coordinación.
+11. **Creación por internos (enmienda 2026-11-17):** una solicitud registrada por Coordinador o Admin mediante `POST /solicitudes` se guarda con origen `PUBLICO` y `organizacion_nombre` del visitante; la creación por el rol Cliente usa siempre su `organizacion_id` con origen `CLIENTE`.
+12. **Transiciones de estado vía REST estricto (enmienda 2026-11-17):** no existen verbos en la URL. Todas las transiciones de ciclo de vida se ejecutan mediante `PATCH /solicitudes/:id/estado` enviando `{ estado, ...datos }`. La transición `REQUIERE_INFORMACION → EN_REVISION` exige nota interna con la gestión realizada. La regeneración de token público se expone como subrecurso `POST /solicitudes/:id/token`.
 
 ---
 

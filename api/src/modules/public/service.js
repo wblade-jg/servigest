@@ -1,14 +1,16 @@
 'use strict'
 
+const fs = require('fs')
+const path = require('path')
 const crypto = require('crypto')
-const { pool } = require('../../config/pool')
+const { conTransaccion } = require('../../db/transaccion')
 const { ApiError } = require('../../middlewares/errores')
 const { emitir, notificarPrueba } = require('../eventos/emisor')
+const { EMAIL_RE, generarToken } = require('../../lib/validaciones')
 const repositorio = require('./repository')
 
 // Reglas de negocio del flujo público.
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const ANIO = () => new Date().getUTCFullYear()
 
 function validarCampos (cuerpo) {
@@ -36,8 +38,8 @@ function validarCampos (cuerpo) {
   }
 }
 
-function generarToken () {
-  return crypto.randomBytes(32).toString('base64url')
+async function listarCategoriasActivas () {
+  return repositorio.listarCategoriasActivas()
 }
 
 async function crearSolicitudPublica ({ cuerpo, archivos, uploadDir }) {
@@ -47,14 +49,9 @@ async function crearSolicitudPublica ({ cuerpo, archivos, uploadDir }) {
     throw new ApiError(400, 'CATEGORIA_INEXISTENTE', 'La categoría indicada no existe o está inactiva.', { campos: ['categoriaId'] })
   }
 
-  const fs = require('fs')
-  const path = require('path')
   fs.mkdirSync(uploadDir, { recursive: true })
 
-  const cliente = await pool.connect()
-  try {
-    await cliente.query('BEGIN')
-
+  const resultado = await conTransaccion(async (cliente) => {
     const secuencia = await repositorio.siguienteSecuencia(cliente)
     const codigo = `SOL-${ANIO()}-${String(secuencia).padStart(5, '0')}`
     const token = generarToken()
@@ -98,26 +95,20 @@ async function crearSolicitudPublica ({ cuerpo, archivos, uploadDir }) {
       metadata: { origen: 'PUBLICO' }
     })
 
-    await cliente.query('COMMIT')
+    return { solicitud, token }
+  })
 
-    const datosEvento = {
-      solicitudId: solicitud.id,
-      codigo: solicitud.codigo,
-      estado: solicitud.estado,
-      fecha: new Date().toISOString()
-    }
-    emitir('coordinacion', 'solicitud.creada', datosEvento)
-    emitir(`seguimiento:${token}`, 'solicitud.creada', datosEvento)
-    notificarPrueba('solicitud.creada', datosEvento)
-
-    return { codigo: solicitud.codigo, token }
-  } catch (error) {
-    await cliente.query('ROLLBACK')
-    // Los archivos ya escritos quedan huérfanos; en P0 es aceptable (disco temporal).
-    throw error
-  } finally {
-    cliente.release()
+  const datosEvento = {
+    solicitudId: resultado.solicitud.id,
+    codigo: resultado.solicitud.codigo,
+    estado: resultado.solicitud.estado,
+    fecha: new Date().toISOString()
   }
+  emitir('coordinacion', 'solicitud.creada', datosEvento)
+  emitir(`seguimiento:${resultado.token}`, 'solicitud.creada', datosEvento)
+  notificarPrueba('solicitud.creada', datosEvento)
+
+  return { codigo: resultado.solicitud.codigo, token: resultado.token }
 }
 
 async function obtenerSeguimiento (token) {
@@ -137,4 +128,10 @@ async function obtenerSeguimiento (token) {
   }
 }
 
-module.exports = { crearSolicitudPublica, obtenerSeguimiento, validarCampos, generarToken }
+module.exports = {
+  crearSolicitudPublica,
+  obtenerSeguimiento,
+  listarCategoriasActivas,
+  validarCampos,
+  generarToken
+}

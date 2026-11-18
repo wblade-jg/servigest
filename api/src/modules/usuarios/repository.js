@@ -1,6 +1,4 @@
-'use strict'
-
-const { pool } = require('../../config/pool')
+import { pool } from '../../config/pool.js'
 
 // SQL del módulo de usuarios.
 
@@ -119,7 +117,7 @@ async function esTecnicoActivo (id) {
   return rows.length > 0
 }
 
-module.exports = {
+export {
   listar,
   obtenerPorId,
   obtenerPorEmail,

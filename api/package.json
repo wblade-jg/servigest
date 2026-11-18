@@ -2,18 +2,23 @@
   "name": "api",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "migrate": "node src/db/migrar.js",
     "seed": "node src/db/migrar.js --seed 003_usuarios_demo.sql",
-    "test": "jest --runInBand"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
   },
   "jest": {
     "testEnvironment": "node",
     "roots": [
       "<rootDir>/tests"
-    ]
+    ],
+    "setupFiles": [
+      "<rootDir>/tests/prepararEntorno.js"
+    ],
+    "transform": {}
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

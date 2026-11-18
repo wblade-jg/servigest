@@ -1,6 +1,4 @@
-'use strict'
-
-const { pool } = require('../../config/pool')
+import { pool } from '../../config/pool.js'
 
 // SQL del módulo de catálogos (especialidades y categorías).
 
@@ -190,7 +188,7 @@ async function categoriaEnUso (id) {
   return rows[0].total > 0
 }
 
-module.exports = {
+export {
   listarEspecialidades,
   obtenerEspecialidadPorId,
   obtenerEspecialidadPorNombre,

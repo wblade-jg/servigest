@@ -1,10 +1,8 @@
-'use strict'
-
-const { ApiError } = require('../../middlewares/errores')
-const { conTransaccion } = require('../../db/transaccion')
-const { parsearPaginacion } = require('../../lib/validaciones')
-const repositorio = require('./repository')
-const repositorioUsuarios = require('../usuarios/repository')
+import { ApiError } from '../../middlewares/errores.js'
+import { conTransaccion } from '../../db/transaccion.js'
+import { parsearPaginacion } from '../../lib/validaciones.js'
+import * as repositorio from './repository.js'
+import * as repositorioUsuarios from '../usuarios/repository.js'
 
 // Reglas de negocio de técnicos.
 
@@ -232,7 +230,7 @@ async function desactivarDisponibilidad (usuario, franjaId) {
   return { ok: true, id: desactivada.id }
 }
 
-module.exports = {
+export {
   listar,
   obtenerPorId,
   habilitar,

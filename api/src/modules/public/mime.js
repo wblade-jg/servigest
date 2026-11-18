@@ -1,5 +1,3 @@
-'use strict'
-
 // Detección de MIME real por magic bytes.
 // MIME permitidos en P0: image/jpeg, image/png, application/pdf.
 
@@ -28,4 +26,4 @@ function extensionDe (mime) {
   return mime === 'image/jpeg' ? '.jpg' : mime === 'image/png' ? '.png' : '.pdf'
 }
 
-module.exports = { detectarMime, MIME_PERMITIDOS, TAMANO_MAX, MAX_ADJUNTOS, sanitizarNombre, extensionDe }
+export { detectarMime, MIME_PERMITIDOS, TAMANO_MAX, MAX_ADJUNTOS, sanitizarNombre, extensionDe }

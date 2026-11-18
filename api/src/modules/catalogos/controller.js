@@ -1,6 +1,4 @@
-'use strict'
-
-const servicio = require('./service')
+import * as servicio from './service.js'
 
 // Controladores de catálogos (especialidades y categorías).
 
@@ -98,7 +96,7 @@ async function desactivarCategoria (req, res, siguiente) {
   }
 }
 
-module.exports = {
+export {
   listarEspecialidades,
   obtenerEspecialidadPorId,
   crearEspecialidad,

@@ -1,8 +1,6 @@
-'use strict'
-
-const { ApiError } = require('../../middlewares/errores')
-const { parsearPaginacion } = require('../../lib/validaciones')
-const repositorio = require('./repository')
+import { ApiError } from '../../middlewares/errores.js'
+import { parsearPaginacion } from '../../lib/validaciones.js'
+import * as repositorio from './repository.js'
 
 // Reglas de negocio de catálogos.
 
@@ -250,7 +248,7 @@ async function desactivarCategoria (usuario, id) {
   return { ok: true, id: desactivada.id }
 }
 
-module.exports = {
+export {
   listarEspecialidades,
   obtenerEspecialidadPorId,
   crearEspecialidad,

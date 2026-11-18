@@ -1,8 +1,6 @@
-'use strict'
-
-const express = require('express')
-const { autenticar, exigirCsrf, soloRoles } = require('../../middlewares/autenticacion')
-const controller = require('./controller')
+import express from 'express'
+import { autenticar, exigirCsrf, soloRoles } from '../../middlewares/autenticacion.js'
+import * as controller from './controller.js'
 
 const router = express.Router()
 
@@ -28,4 +26,4 @@ router.post('/:id/notas', soloRoles('ADMIN', 'COORDINADOR', 'TECNICO'), controll
 // Subrecurso administrativo para regenerar el token público.
 router.post('/:id/token', soloRoles('ADMIN'), controller.regenerarToken)
 
-module.exports = router
+export default router

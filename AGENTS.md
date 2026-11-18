@@ -23,7 +23,7 @@ No cargues documentos adicionales de forma anticipada. Si una tarea exige una re
 
 | Capa | Decisión |
 |---|---|
-| Backend | Node.js + Express |
+| Backend | Node.js + Express (ESM nativo, `"type": "module"`) |
 | Datos | PostgreSQL con `pg`, SQL puro, **sin ORM** |
 | Migraciones | `.sql` numerados + runner propio con `schema_migrations` |
 | Frontend | React + Vite + TypeScript estricto |

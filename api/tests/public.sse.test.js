@@ -1,18 +1,12 @@
-'use strict'
-
 // Prueba el endpoint SSE real: se conecta, recibe el evento emitido al canal
 // de seguimiento y verifica la cabecera text/event-stream.
 
-const http = require('http')
-const { createServer } = require('http')
-const {
-  getApp,
-  iniciarEntorno,
-  cerrarEntorno,
-  categoriaReal
-} = require('./auxiliares')
-const servicio = require('../src/modules/public/service')
-const { pool } = require('../src/config/pool')
+import http from 'node:http'
+import { createServer } from 'node:http'
+import { getApp, iniciarEntorno, cerrarEntorno, categoriaReal } from './auxiliares.js'
+import * as servicio from '../src/modules/public/service.js'
+import { emitir } from '../src/modules/eventos/emisor.js'
+import { pool } from '../src/config/pool.js'
 
 describe('SSE de seguimiento público', () => {
   const { crearSolicitudPublica } = servicio
@@ -67,7 +61,6 @@ describe('SSE de seguimiento público', () => {
 
     // La fase 1 no tiene endpoints de transición; el cambio de estado se simula
     // con la misma vía que usará la fase 2: emisión al canal de seguimiento.
-    const { emitir } = require('../src/modules/eventos/emisor')
     emitir(`seguimiento:${creada.token}`, 'solicitud.estado', {
       codigo: creada.codigo,
       estado: 'EN_REVISION'

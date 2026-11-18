@@ -1,8 +1,9 @@
-'use strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pool } from '../config/pool.js'
 
-const fs = require('fs')
-const path = require('path')
-const { pool } = require('../config/pool')
+const directorioActual = path.dirname(fileURLToPath(import.meta.url))
 
 // Runner de migraciones forward-only con registro en schema_migrations.
 async function migrar () {
@@ -14,7 +15,7 @@ async function migrar () {
         aplicada_en timestamptz NOT NULL DEFAULT now()
       )
     `)
-    const dir = path.resolve(__dirname, '../../migrations')
+    const dir = path.resolve(directorioActual, '../../migrations')
     const archivos = fs.readdirSync(dir).filter(f => f.endsWith('.sql')).sort()
     for (const archivo of archivos) {
       const { rowCount } = await cliente.query(
@@ -46,7 +47,7 @@ async function migrar () {
 // Busca primero en seeds/; los catálogos de fase 1 viven en migrations/.
 async function sembrar (archivo) {
   const candidatos = ['../../seeds', '../../migrations']
-    .map(ruta => path.resolve(__dirname, ruta, archivo))
+    .map(ruta => path.resolve(directorioActual, ruta, archivo))
   const ruta = candidatos.find(ruta => fs.existsSync(ruta))
   if (!ruta) {
     throw new Error(`Seed no encontrado: ${archivo}`)
@@ -56,9 +57,12 @@ async function sembrar (archivo) {
   console.log(`Seed ejecutado: ${archivo}`)
 }
 
-module.exports = { migrar, sembrar }
+export { migrar, sembrar }
 
-if (require.main === module) {
+const esEjecucionDirecta =
+  process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url
+
+if (esEjecucionDirecta) {
   const indice = process.argv.indexOf('--seed')
   const tarea = indice > -1 ? sembrar(process.argv[indice + 1]) : migrar()
   tarea

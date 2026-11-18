@@ -1,8 +1,6 @@
-'use strict'
-
-const crypto = require('crypto')
-const bcrypt = require('bcryptjs')
-const { pool } = require('../../config/pool')
+import crypto from 'node:crypto'
+import bcrypt from 'bcryptjs'
+import { pool } from '../../config/pool.js'
 
 // SQL del módulo de autenticación.
 
@@ -100,7 +98,7 @@ async function actualizarPassword (usuarioId, passwordHash) {
   )
 }
 
-module.exports = {
+export {
   buscarUsuarioPorEmail,
   buscarUsuarioPorId,
   HASH_CORTESIA,

@@ -1,6 +1,4 @@
-'use strict'
-
-const { pool } = require('../config/pool')
+import { pool } from '../config/pool.js'
 
 // Ejecuta el trabajo dentro de BEGIN/COMMIT con rollback ante error.
 async function conTransaccion (trabajo) {
@@ -18,4 +16,4 @@ async function conTransaccion (trabajo) {
   }
 }
 
-module.exports = { conTransaccion }
+export { conTransaccion }

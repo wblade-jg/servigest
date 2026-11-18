@@ -1,8 +1,6 @@
-'use strict'
-
 // Pruebas del canal SSE de coordinación: autenticación por cookie y roles.
 
-const {
+import {
   iniciarEntorno,
   agente,
   limpiarTablas,
@@ -10,7 +8,7 @@ const {
   crearOrganizacion,
   crearUsuario,
   loginComo
-} = require('./auxiliares')
+} from './auxiliares.js'
 
 beforeAll(async () => {
   await iniciarEntorno()

@@ -1,9 +1,7 @@
-'use strict'
-
-const express = require('express')
-const multer = require('multer')
-const { crearLimitador } = require('../../middlewares/limitador')
-const controller = require('./controller')
+import express from 'express'
+import multer from 'multer'
+import { crearLimitador } from '../../middlewares/limitador.js'
+import * as controller from './controller.js'
 
 const router = express.Router()
 
@@ -31,4 +29,4 @@ router.post(
 router.get('/seguimiento/:token', controller.getSeguimiento)
 router.get('/seguimiento/:token/eventos', controller.getSeguimientoSse)
 
-module.exports = router
+export default router

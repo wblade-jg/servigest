@@ -7,7 +7,11 @@ export default function Hero() {
 
   const consultar = (e: FormEvent) => {
     e.preventDefault()
-    const limpio = token.trim()
+    let limpio = token.trim()
+    if (limpio.includes('/seguimiento/')) {
+      const partes = limpio.split('/seguimiento/')
+      limpio = partes[partes.length - 1].split('?')[0].split('#')[0].trim()
+    }
     if (limpio) navigate(`/seguimiento/${encodeURIComponent(limpio)}`)
   }
 
@@ -53,14 +57,14 @@ export default function Hero() {
                 ¿Ya enviaste una solicitud?
               </label>
               <p className="mt-1 text-sm text-tinta-700">
-                Ingresa el código que se generó al registrarla.
+                Ingresa el token de seguimiento que recibiste o pega tu enlace.
               </p>
               <div className="mt-3 flex gap-2">
                 <input
                   id="token-seguimiento"
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
-                  placeholder="SOL-2026-00001"
+                  placeholder="Ej. tok-demo-fase3-00010 o tu token"
                   className="w-full flex-1 rounded-md border border-tinta-900/20 bg-white px-3 py-2 font-mono text-sm text-tinta-950 placeholder:text-tinta-500/50 focus:border-violeta-500 focus:outline-none focus:ring-1 focus:ring-violeta-500"
                 />
                 <button

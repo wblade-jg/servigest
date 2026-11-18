@@ -1,8 +1,6 @@
-'use strict'
-
-const express = require('express')
-const controlador = require('./controller')
-const { autenticar, exigirCsrf, soloRoles } = require('../../middlewares/autenticacion')
+import express from 'express'
+import * as controlador from './controller.js'
+import { autenticar, exigirCsrf, soloRoles } from '../../middlewares/autenticacion.js'
 
 const router = express.Router()
 
@@ -28,4 +26,4 @@ router.post('/:id/disponibilidad', soloRoles('ADMIN'), controlador.crearDisponib
 router.patch('/disponibilidad/:franjaId', soloRoles('ADMIN'), controlador.actualizarDisponibilidad)
 router.delete('/disponibilidad/:franjaId', soloRoles('ADMIN'), controlador.desactivarDisponibilidad)
 
-module.exports = router
+export default router

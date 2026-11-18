@@ -1,8 +1,13 @@
-'use strict'
-
-const { ApiError } = require('../../middlewares/errores')
-const servicio = require('./service')
-const { detectarMime, MIME_PERMITIDOS, TAMANO_MAX, MAX_ADJUNTOS, sanitizarNombre, extensionDe } = require('./mime')
+import { ApiError } from '../../middlewares/errores.js'
+import * as servicio from './service.js'
+import {
+  detectarMime,
+  MIME_PERMITIDOS,
+  TAMANO_MAX,
+  MAX_ADJUNTOS,
+  sanitizarNombre,
+  extensionDe
+} from './mime.js'
 
 // Handlers del módulo público.
 
@@ -59,4 +64,4 @@ function getSeguimientoSse (req, res) {
   req.on('close', () => { /* el emisor limpia al cerrar */ })
 }
 
-module.exports = { getCategorias, postSolicitud, getSeguimiento, getSeguimientoSse }
+export { getCategorias, postSolicitud, getSeguimiento, getSeguimientoSse }

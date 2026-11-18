@@ -1,6 +1,4 @@
-'use strict'
-
-const {
+import {
   iniciarEntorno,
   agente,
   limpiarTablas,
@@ -9,8 +7,8 @@ const {
   adjuntoValido,
   cerrarEntorno,
   eventos
-} = require('./auxiliares')
-const { pool } = require('../src/config/pool')
+} from './auxiliares.js'
+import { pool } from '../src/config/pool.js'
 
 beforeAll(async () => {
   await iniciarEntorno()

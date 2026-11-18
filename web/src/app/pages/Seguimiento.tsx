@@ -38,8 +38,9 @@ export default function Seguimiento() {
   useEffect(() => { void cargar() }, [token])
 
   // SSE del canal público: refetch REST al reconectar y al recibir cada evento.
+  // Solo se conecta si no hay error de búsqueda (evita bucles 404 en tokens inválidos).
   useSse(
-    token
+    !error && token
       ? `${import.meta.env.VITE_API_URL ?? '/api'}/public/seguimiento/${token}/eventos`
       : '',
     () => { void cargar() },

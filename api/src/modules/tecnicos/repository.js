@@ -1,6 +1,4 @@
-'use strict'
-
-const { pool } = require('../../config/pool')
+import { pool } from '../../config/pool.js'
 
 // SQL del módulo de técnicos.
 
@@ -229,7 +227,7 @@ async function desactivarDisponibilidad (id) {
   return rows[0] || null
 }
 
-module.exports = {
+export {
   listar,
   obtenerPorId,
   obtenerTecnicoPorUsuarioId,

@@ -1,8 +1,6 @@
-'use strict'
-
 // Pruebas del flujo de Intervenciones del Técnico (Grupo G3 - Fase 3)
 
-const {
+import {
   iniciarEntorno,
   agente,
   limpiarTablas,
@@ -12,8 +10,8 @@ const {
   loginComo,
   crearSolicitudDirecta,
   CLAVE_PRUEBA
-} = require('./auxiliares')
-const { pool } = require('../src/config/pool')
+} from './auxiliares.js'
+import { pool } from '../src/config/pool.js'
 
 let admin = null
 let coordinador = null

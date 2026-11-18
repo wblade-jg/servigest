@@ -181,3 +181,9 @@ WHERE s.codigo IN ('SOL-2026-00010', 'SOL-2026-00011', 'SOL-2026-00012', 'SOL-20
   AND NOT EXISTS (
     SELECT 1 FROM eventos_solicitud e WHERE e.solicitud_id = s.id
   );
+
+-- Sincronizar la secuencia global con los códigos insertados para evitar colisiones
+SELECT setval('solicitudes_codigo_seq', GREATEST(
+  (SELECT COALESCE(MAX(SUBSTRING(codigo FROM 10)::int), 1) FROM solicitudes),
+  (SELECT last_value FROM solicitudes_codigo_seq)
+));

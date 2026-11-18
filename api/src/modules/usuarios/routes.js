@@ -1,8 +1,6 @@
-'use strict'
-
-const express = require('express')
-const controlador = require('./controller')
-const { autenticar, exigirCsrf, soloRoles } = require('../../middlewares/autenticacion')
+import express from 'express'
+import * as controlador from './controller.js'
+import { autenticar, exigirCsrf, soloRoles } from '../../middlewares/autenticacion.js'
 
 const router = express.Router()
 
@@ -19,4 +17,4 @@ router.patch('/:id', controlador.actualizar)
 router.patch('/:id/password', controlador.cambiarPassword)
 router.delete('/:id', controlador.desactivar)
 
-module.exports = router
+export default router

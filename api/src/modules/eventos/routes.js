@@ -1,8 +1,6 @@
-'use strict'
-
-const express = require('express')
-const { autenticar, soloRoles } = require('../../middlewares/autenticacion')
-const { suscribir } = require('./emisor')
+import express from 'express'
+import { autenticar, soloRoles } from '../../middlewares/autenticacion.js'
+import { suscribir } from './emisor.js'
 
 const router = express.Router()
 
@@ -19,4 +17,4 @@ router.get('/tecnico', autenticar, soloRoles('TECNICO'), (req, res) => {
   req.on('close', () => { /* el emisor limpia al cerrar */ })
 })
 
-module.exports = router
+export default router

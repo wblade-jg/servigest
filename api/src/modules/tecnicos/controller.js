@@ -1,6 +1,4 @@
-'use strict'
-
-const servicio = require('./service')
+import * as servicio from './service.js'
 
 // Controladores de técnicos.
 
@@ -98,7 +96,7 @@ async function desactivarDisponibilidad (req, res, siguiente) {
   }
 }
 
-module.exports = {
+export {
   listar,
   obtenerPorId,
   habilitar,

@@ -1,6 +1,4 @@
-'use strict'
-
-const repositorio = require('./repository')
+import * as repositorio from './repository.js'
 
 // Reglas del dashboard: Admin y Coordinador ven métricas globales; el Cliente
 // solo las de su organización y nunca la carga por técnico.
@@ -31,4 +29,4 @@ async function obtener (usuario) {
   }
 }
 
-module.exports = { obtener }
+export { obtener }

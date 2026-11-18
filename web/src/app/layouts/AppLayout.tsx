@@ -17,10 +17,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </Link>
 
         <nav aria-label="Portal" className="flex flex-row gap-1 overflow-x-auto px-3 pb-3 text-sm lg:flex-col lg:px-3 lg:pb-0">
-          {usuario?.rol === 'TECNICO' ? (
-            <EnlaceSidebar to="/app/agenda" texto="Mi agenda" />
-          ) : (
-            <EnlaceSidebar to="/app/solicitudes" texto="Solicitudes" />
+          {usuario?.rol === 'TECNICO' && <EnlaceSidebar to="/app/agenda" texto="Mi agenda" />}
+          {usuario?.rol === 'CLIENTE' && (
+            <>
+              <EnlaceSidebar to="/app/mis-solicitudes" texto="Mis solicitudes" />
+              <EnlaceSidebar to="/app/dashboard" texto="Dashboard" />
+            </>
+          )}
+          {(usuario?.rol === 'ADMIN' || usuario?.rol === 'COORDINADOR') && (
+            <>
+              <EnlaceSidebar to="/app/solicitudes" texto="Solicitudes" />
+              <EnlaceSidebar to="/app/dashboard" texto="Dashboard" />
+            </>
           )}
           {usuario?.rol === 'ADMIN' && (
             <>

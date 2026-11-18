@@ -13,6 +13,7 @@ import {
   fechaLocal,
 } from '../../../lib/solicitudes'
 import { BadgeEstado, Boton, Campo, AreaTexto, Selector, Modal, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import ModalAsignar from './ModalAsignar'
 
 const PRIORIDADES = ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'] as const
 
@@ -35,6 +36,7 @@ export default function Detalle() {
   const [error, setError] = useState<string | null>(null)
   const [accion, setAccion] = useState<AccionModal | null>(null)
   const [mensaje, setMensaje] = useState<string | null>(null)
+  const [modalAsignarAbierto, setModalAsignarAbierto] = useState(false)
 
   const cargar = useCallback(async () => {
     if (!id) return
@@ -146,7 +148,7 @@ export default function Detalle() {
         },
       )
     }
-    if (estado === 'APROBADA' || estado === 'RESUELTA') {
+    if (estado === 'APROBADA' || estado === 'ASIGNADA' || estado === 'RESUELTA') {
       acciones.push({
         titulo: 'Cancelar solicitud',
         texto: 'La cancelación requiere un motivo y queda auditada.',
@@ -247,7 +249,18 @@ export default function Detalle() {
                 </div>
               )}
               {estado === 'APROBADA' && (
-                <p className="mt-4 text-xs text-tinta-500">La asignación de técnico llega en la fase 3.</p>
+                <div className="mt-4 border-t border-tinta-900/10 pt-4">
+                  <Boton variante="primario" onClick={() => setModalAsignarAbierto(true)}>
+                    Asignar técnico
+                  </Boton>
+                </div>
+              )}
+              {estado === 'ASIGNADA' && (
+                <div className="mt-4 border-t border-tinta-900/10 pt-4">
+                  <Boton variante="secundario" onClick={() => setModalAsignarAbierto(true)}>
+                    Reasignar técnico
+                  </Boton>
+                </div>
               )}
               {estado === 'RESUELTA' && (
                 <p className="mt-4 text-xs text-tinta-500">El cierre llega en la fase 3.</p>
@@ -344,6 +357,22 @@ export default function Detalle() {
             </div>
           </form>
         </Modal>
+      )}
+
+      {modalAsignarAbierto && solicitud && (
+        <ModalAsignar
+          solicitud={solicitud}
+          abierto={modalAsignarAbierto}
+          onCerrar={() => setModalAsignarAbierto(false)}
+          onExito={async () => {
+            setMensaje(
+              solicitud.estado === 'ASIGNADA'
+                ? 'Técnico reasignado exitosamente.'
+                : 'Técnico asignado exitosamente.'
+            )
+            await cargar()
+          }}
+        />
       )}
     </section>
   )

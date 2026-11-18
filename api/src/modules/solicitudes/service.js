@@ -164,6 +164,79 @@ async function crearSolicitud (usuario, cuerpo) {
 
 // ─── Máquina de Estados: Configuración Declarativa ──────────────────────────
 
+async function validarYResolverAsignacion ({ solicitud, cuerpo, cliente }) {
+  if (!cuerpo?.tecnicoId || typeof cuerpo.tecnicoId !== 'string') {
+    throw new ApiError(400, 'TECNICO_OBLIGATORIO', 'Debes seleccionar un técnico para asignar.', {
+      campos: ['tecnicoId']
+    })
+  }
+
+  if (!cuerpo?.fechaProgramada) {
+    throw new ApiError(400, 'FECHA_OBLIGATORIA', 'La fecha programada es obligatoria.', {
+      campos: ['fechaProgramada']
+    })
+  }
+
+  const fechaProgramadaMs = new Date(cuerpo.fechaProgramada).getTime()
+  if (isNaN(fechaProgramadaMs)) {
+    throw new ApiError(400, 'FECHA_INVALIDA', 'La fecha programada debe tener un formato ISO 8601 válido.', {
+      campos: ['fechaProgramada']
+    })
+  }
+
+  if (fechaProgramadaMs <= Date.now()) {
+    throw new ApiError(400, 'FECHA_PASADA', 'La fecha programada debe ser futura.', {
+      campos: ['fechaProgramada']
+    })
+  }
+
+  if (solicitud.fechaObjetivo) {
+    const fechaObjetivoMs = new Date(solicitud.fechaObjetivo).getTime()
+    if (fechaProgramadaMs > fechaObjetivoMs) {
+      throw new ApiError(422, 'FECHA_SUPERA_SLA', 'La fecha programada no puede ser posterior a la fecha objetivo del SLA.', {
+        campos: ['fechaProgramada']
+      })
+    }
+  }
+
+  const tecnico = await repositorio.validarTecnicoActivo(cliente, cuerpo.tecnicoId)
+  if (!tecnico) {
+    throw new ApiError(422, 'TECNICO_INACTIVO', 'El técnico seleccionado no existe o no está activo.', {
+      campos: ['tecnicoId']
+    })
+  }
+
+  const especialidadRequeridaId = await repositorio.obtenerEspecialidadRequerida(cliente, solicitud.categoriaId)
+  if (especialidadRequeridaId) {
+    const tieneEspecialidad = await repositorio.tecnicoTieneEspecialidad(cliente, cuerpo.tecnicoId, especialidadRequeridaId)
+    if (!tieneEspecialidad) {
+      throw new ApiError(422, 'ESPECIALIDAD_NO_COINCIDE', 'El técnico no cuenta con la especialidad requerida para esta categoría.', {
+        campos: ['tecnicoId']
+      })
+    }
+  }
+
+  const enDisponibilidad = await repositorio.validarDisponibilidadTecnico(cliente, cuerpo.tecnicoId, cuerpo.fechaProgramada)
+  if (!enDisponibilidad) {
+    throw new ApiError(422, 'FUERA_DE_DISPONIBILIDAD', 'La fecha y hora programada está fuera del horario de disponibilidad del técnico.', {
+      campos: ['fechaProgramada']
+    })
+  }
+
+  const choques = await repositorio.detectarChoqueHorario(cliente, cuerpo.tecnicoId, cuerpo.fechaProgramada, solicitud.id)
+  if (choques.length > 0) {
+    throw new ApiError(422, 'CHOQUE_HORARIO', 'El técnico ya tiene una solicitud asignada o en proceso en un rango de ±1 hora.', {
+      campos: ['fechaProgramada', 'tecnicoId']
+    })
+  }
+
+  const fechaProgramadaIso = new Date(cuerpo.fechaProgramada).toISOString()
+  return {
+    tecnicoId: cuerpo.tecnicoId,
+    fechaHoraProgramada: fechaProgramadaIso
+  }
+}
+
 const TRANSICIONES = {
   'RECIBIDA:EN_REVISION': {
     roles: ['ADMIN', 'COORDINADOR'],
@@ -323,6 +396,67 @@ const TRANSICIONES = {
         metadata: { motivo }
       }
     }
+  },
+
+  'APROBADA:ASIGNADA': {
+    roles: ['ADMIN', 'COORDINADOR'],
+    tipoEvento: 'ASIGNACION',
+    aplicar: async ({ solicitud, cuerpo, cliente }) => {
+      const { tecnicoId, fechaHoraProgramada } = await validarYResolverAsignacion({
+        solicitud,
+        cuerpo,
+        cliente
+      })
+      const cambios = {
+        tecnicoId,
+        fechaHoraProgramada
+      }
+      return {
+        cambios,
+        metadata: {
+          tecnicoId,
+          fechaProgramada: fechaHoraProgramada
+        },
+        extrasRespuesta: {
+          tecnicoId,
+          fechaProgramada: fechaHoraProgramada
+        }
+      }
+    }
+  },
+
+  'ASIGNADA:ASIGNADA': {
+    roles: ['ADMIN', 'COORDINADOR'],
+    tipoEvento: 'REASIGNACION',
+    validar: (cuerpo) => {
+      textoObligatorio(cuerpo?.motivo, 'motivo', 'MOTIVO_REASIGNACION_REQUERIDO',
+        'La reasignación requiere un motivo de al menos 5 caracteres.')
+    },
+    aplicar: async ({ solicitud, cuerpo, cliente }) => {
+      const motivo = cuerpo.motivo.trim()
+      const { tecnicoId, fechaHoraProgramada } = await validarYResolverAsignacion({
+        solicitud,
+        cuerpo,
+        cliente
+      })
+      const cambios = {
+        tecnicoId,
+        fechaHoraProgramada
+      }
+      return {
+        cambios,
+        metadata: {
+          tecnicoId,
+          fechaProgramada: fechaHoraProgramada,
+          motivo
+        },
+        extrasRespuesta: {
+          tecnicoId,
+          fechaProgramada: fechaHoraProgramada,
+          motivo
+        }
+      }
+    }
   }
 }
 
@@ -363,6 +497,7 @@ const TRANSICION_CANCELAR = {
 
 async function transicionarEstado (usuario, solicitudId, estadoDestino, cuerpo = {}) {
   let eventoPostCommit = null
+  let tipoEventoAplicado = null
 
   const resultado = await conTransaccion(async (cliente) => {
     const solicitud = await repositorio.bloquearPorId(cliente, solicitudId)
@@ -411,6 +546,8 @@ async function transicionarEstado (usuario, solicitudId, estadoDestino, cuerpo =
       metadata: metadata || {}
     })
 
+    tipoEventoAplicado = regla.tipoEvento
+
     eventoPostCommit = {
       solicitudId,
       codigo: solicitudActualizada.codigo,
@@ -433,6 +570,28 @@ async function transicionarEstado (usuario, solicitudId, estadoDestino, cuerpo =
     },
     'solicitud.estado'
   )
+
+  if (tipoEventoAplicado === 'ASIGNACION') {
+    notificarCambio(
+      {
+        solicitudId: resultado.solicitudId,
+        codigo: resultado.codigo,
+        estado: resultado.estado,
+        tokenPublico: resultado.tokenPublico
+      },
+      'solicitud.asignada'
+    )
+  } else if (tipoEventoAplicado === 'REASIGNACION') {
+    notificarCambio(
+      {
+        solicitudId: resultado.solicitudId,
+        codigo: resultado.codigo,
+        estado: resultado.estado,
+        tokenPublico: resultado.tokenPublico
+      },
+      'solicitud.reasignada'
+    )
+  }
 
   const { tokenPublico, ...respuesta } = resultado
   return respuesta
@@ -457,6 +616,10 @@ async function rechazar (usuario, solicitudId, extras) {
 
 async function cancelar (usuario, solicitudId, extras) {
   return transicionarEstado(usuario, solicitudId, 'CANCELADA', extras)
+}
+
+async function asignar (usuario, solicitudId, extras) {
+  return transicionarEstado(usuario, solicitudId, 'ASIGNADA', extras)
 }
 
 // Regenera el token público. Solo Admin. Devuelve el nuevo token y audita.
@@ -527,6 +690,7 @@ module.exports = {
   aprobar,
   rechazar,
   cancelar,
+  asignar,
   regenerarToken,
   agregarNota,
   listarNotas,

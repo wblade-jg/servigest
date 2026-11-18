@@ -11,6 +11,7 @@ const CAMPOS_SOLICITUD = `
   s.contacto_telefono AS "contactoTelefono",
   s.organizacion_id AS "organizacionId", o.nombre AS "organizacionNombre",
   s.categoria_id AS "categoriaId", c.nombre AS "categoriaNombre",
+  c.especialidad_requerida_id AS "especialidadRequeridaId", esp.nombre AS "especialidadRequeridaNombre",
   s.tecnico_id AS "tecnicoId", u.nombre AS "tecnicoNombre",
   s.fecha_hora_programada AS "fechaProgramada", s.fecha_objetivo AS "fechaObjetivo",
   s.constancia_aceptacion AS "constanciaAceptacion",
@@ -49,6 +50,7 @@ async function listar ({ usuario, filtros }) {
     SELECT ${CAMPOS_SOLICITUD}
     FROM solicitudes s
     LEFT JOIN categorias_servicio c ON c.id = s.categoria_id
+    LEFT JOIN especialidades esp ON esp.id = c.especialidad_requerida_id
     LEFT JOIN organizaciones o ON o.id = s.organizacion_id
     LEFT JOIN tecnicos t ON t.usuario_id = s.tecnico_id
     LEFT JOIN usuarios u ON u.id = t.usuario_id
@@ -73,6 +75,7 @@ async function obtenerPorId (id) {
     SELECT ${CAMPOS_SOLICITUD}
     FROM solicitudes s
     LEFT JOIN categorias_servicio c ON c.id = s.categoria_id
+    LEFT JOIN especialidades esp ON esp.id = c.especialidad_requerida_id
     LEFT JOIN organizaciones o ON o.id = s.organizacion_id
     LEFT JOIN tecnicos t ON t.usuario_id = s.tecnico_id
     LEFT JOIN usuarios u ON u.id = t.usuario_id
@@ -87,6 +90,7 @@ async function bloquearPorId (cliente, id) {
     SELECT ${CAMPOS_SOLICITUD}, s.token_publico AS "tokenPublico"
     FROM solicitudes s
     LEFT JOIN categorias_servicio c ON c.id = s.categoria_id
+    LEFT JOIN especialidades esp ON esp.id = c.especialidad_requerida_id
     LEFT JOIN organizaciones o ON o.id = s.organizacion_id
     LEFT JOIN tecnicos t ON t.usuario_id = s.tecnico_id
     LEFT JOIN usuarios u ON u.id = t.usuario_id
@@ -184,6 +188,67 @@ async function actualizarToken (cliente, solicitudId, tokenPublico) {
   return rows[0]
 }
 
+// ─── Funciones auxiliares para asignación de técnicos ─────────────────────────
+
+async function validarTecnicoActivo (cliente, tecnicoId) {
+  const { rows } = await cliente.query(`
+    SELECT t.usuario_id AS id, u.nombre, u.email
+    FROM tecnicos t
+    JOIN usuarios u ON u.id = t.usuario_id
+    WHERE t.usuario_id = $1
+      AND t.activo = true
+      AND u.activo = true
+      AND u.rol = 'TECNICO'
+  `, [tecnicoId])
+  return rows[0] || null
+}
+
+async function obtenerEspecialidadRequerida (cliente, categoriaId) {
+  const { rows } = await cliente.query(`
+    SELECT especialidad_requerida_id AS "especialidadRequeridaId"
+    FROM categorias_servicio
+    WHERE id = $1
+  `, [categoriaId])
+  return rows[0]?.especialidadRequeridaId || null
+}
+
+async function tecnicoTieneEspecialidad (cliente, tecnicoId, especialidadId) {
+  const { rows } = await cliente.query(`
+    SELECT 1 FROM tecnico_especialidad
+    WHERE tecnico_id = $1 AND especialidad_id = $2
+  `, [tecnicoId, especialidadId])
+  return rows.length > 0
+}
+
+async function validarDisponibilidadTecnico (cliente, tecnicoId, fechaProgramada) {
+  // EXTRACT(ISODOW FROM ...) devuelve 1 (lunes) a 7 (domingo)
+  // La comparación de horario se realiza convirtiendo a la zona horaria del sistema (America/Guayaquil)
+  const { rows } = await cliente.query(`
+    SELECT id
+    FROM disponibilidad
+    WHERE tecnico_id = $1
+      AND activo = true
+      AND dia_semana = EXTRACT(ISODOW FROM ($2::timestamptz AT TIME ZONE 'America/Guayaquil'))
+      AND hora_inicio <= ($2::timestamptz AT TIME ZONE 'America/Guayaquil')::time
+      AND hora_fin >= ($2::timestamptz AT TIME ZONE 'America/Guayaquil')::time
+  `, [tecnicoId, fechaProgramada])
+  return rows.length > 0
+}
+
+async function detectarChoqueHorario (cliente, tecnicoId, fechaProgramada, solicitudActualId) {
+  const { rows } = await cliente.query(`
+    SELECT id, codigo, fecha_hora_programada AS "fechaProgramada"
+    FROM solicitudes
+    WHERE tecnico_id = $1
+      AND id != $2
+      AND estado IN ('ASIGNADA', 'EN_PROCESO')
+      AND fecha_hora_programada IS NOT NULL
+      AND fecha_hora_programada >= ($3::timestamptz - interval '1 hour')
+      AND fecha_hora_programada <= ($3::timestamptz + interval '1 hour')
+  `, [tecnicoId, solicitudActualId, fechaProgramada])
+  return rows
+}
+
 module.exports = {
   listar,
   obtenerPorId,
@@ -194,5 +259,10 @@ module.exports = {
   insertarNota,
   listarNotas,
   obtenerSlaRegla,
-  actualizarToken
+  actualizarToken,
+  validarTecnicoActivo,
+  obtenerEspecialidadRequerida,
+  tecnicoTieneEspecialidad,
+  validarDisponibilidadTecnico,
+  detectarChoqueHorario
 }

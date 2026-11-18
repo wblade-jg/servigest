@@ -1,5 +1,10 @@
 # ServiGest Ecuador
 
+> [!NOTE]
+> **DOCUMENTO FUNCIONAL PRELIMINAR (SOLO CONTEXTO DE PRODUCTO)**  
+> Este documento representa la definición funcional y comercial inicial del producto. No constituye la especificación técnica ni la fuente de verdad de implementación.  
+> Para la arquitectura, ciclo de vida de solicitudes, endpoints y alcance del P0, consultar [`docs/plan-implementacion.md`](docs/plan-implementacion.md), [`docs/fase-3-plan.md`](docs/fase-3-plan.md) y [`docs/referencia-api.md`](docs/referencia-api.md).
+
 ## Descripción del producto y alcance del MVP --- P0
 
 **Versión:** 1.0\

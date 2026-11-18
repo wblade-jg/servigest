@@ -6,6 +6,11 @@
 **Base:** `servigest_mvp_p0.md`
 **Naturaleza:** proyecto académico / demo evaluable
 
+> [!WARNING]
+> **DOCUMENTO HISTÓRICO DEROGADO (SOLO CONTEXTO)**  
+> Este documento registra el acuerdo de diseño inicial (2026-11-16) y se conserva únicamente como contexto histórico de diseño. **Ya no prevalece**.  
+> Las únicas fuentes de verdad vigentes para la implementación son [`plan-implementacion.md`](plan-implementacion.md) y [`fase-3-plan.md`](fase-3-plan.md). Si existe cualquier discrepancia técnica o de alcance, prevalecen los planes.
+
 ---
 
 ## 1. Objetivo del documento

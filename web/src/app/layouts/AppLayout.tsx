@@ -11,13 +11,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen lg:flex">
       <aside className="flex flex-col bg-tinta-900 text-white lg:min-h-screen lg:w-64 lg:shrink-0">
-        <Link to="/app/solicitudes" className="flex items-center gap-3 px-6 py-5">
+        <Link to="/app" className="flex items-center gap-3 px-6 py-5">
           <img src="/servigest-logo.png" alt="" className="h-8 w-auto brightness-0 invert" />
           <span className="font-display font-bold tracking-tight">ServiGest</span>
         </Link>
 
         <nav aria-label="Portal" className="flex flex-row gap-1 overflow-x-auto px-3 pb-3 text-sm lg:flex-col lg:px-3 lg:pb-0">
-          <EnlaceSidebar to="/app/solicitudes" texto="Solicitudes" />
+          {usuario?.rol === 'TECNICO' ? (
+            <EnlaceSidebar to="/app/agenda" texto="Mi agenda" />
+          ) : (
+            <EnlaceSidebar to="/app/solicitudes" texto="Solicitudes" />
+          )}
           {usuario?.rol === 'ADMIN' && (
             <>
               <EnlaceSidebar to="/app/organizaciones" texto="Organizaciones" />

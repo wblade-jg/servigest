@@ -10,11 +10,19 @@ import EnConstruccion from './app/pages/EnConstruccion'
 import Login from './app/pages/Login'
 import Bandeja from './app/pages/solicitudes/Bandeja'
 import Detalle from './app/pages/solicitudes/Detalle'
+import MiAgenda from './app/pages/tecnico/MiAgenda'
 import Organizaciones from './app/pages/admin/Organizaciones'
 import Usuarios from './app/pages/admin/Usuarios'
 import Tecnicos from './app/pages/admin/Tecnicos'
 import Catalogos from './app/pages/admin/Catalogos'
 import { RequireAuth, RequireRol } from './app/layouts/PortalGuardas'
+import { useAuth } from './lib/auth'
+
+// Redirección inicial según el rol: el técnico aterriza en su agenda.
+function InicioPortal() {
+  const { usuario } = useAuth()
+  return <Navigate to={usuario?.rol === 'TECNICO' ? '/app/agenda' : '/app/solicitudes'} replace />
+}
 
 export default function App() {
   return (
@@ -31,7 +39,7 @@ export default function App() {
 
       {/* Portal interno */}
       <Route element={<RequireAuth />}>
-        <Route path="/app" element={<Navigate to="/app/solicitudes" replace />} />
+        <Route path="/app" element={<InicioPortal />} />
         <Route
           path="/app/solicitudes"
           element={
@@ -45,6 +53,16 @@ export default function App() {
           element={
             <RequireRol roles={['ADMIN', 'COORDINADOR']}>
               <Detalle />
+            </RequireRol>
+          }
+        />
+
+        {/* Agenda del técnico */}
+        <Route
+          path="/app/agenda"
+          element={
+            <RequireRol roles={['TECNICO']}>
+              <MiAgenda />
             </RequireRol>
           }
         />

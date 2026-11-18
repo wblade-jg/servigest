@@ -13,4 +13,10 @@ router.get('/coordinacion', autenticar, soloRoles('ADMIN', 'COORDINADOR'), (req,
   req.on('close', () => { /* el emisor limpia al cerrar */ })
 })
 
+// Canal del técnico: intervenciones iniciadas/resueltas y estado de sus asignaciones.
+router.get('/tecnico', autenticar, soloRoles('TECNICO'), (req, res) => {
+  suscribir('tecnico', res)
+  req.on('close', () => { /* el emisor limpia al cerrar */ })
+})
+
 module.exports = router

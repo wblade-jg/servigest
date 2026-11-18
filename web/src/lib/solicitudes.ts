@@ -36,6 +36,8 @@ export interface Solicitud {
   organizacionNombre: string | null
   categoriaId: string
   categoriaNombre: string | null
+  especialidadRequeridaId?: string | null
+  especialidadRequeridaNombre?: string | null
   tecnicoId: string | null
   tecnicoNombre: string | null
   fechaProgramada: string | null

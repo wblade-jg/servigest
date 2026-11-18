@@ -13,6 +13,8 @@ import {
   fechaLocal,
 } from '../../../lib/solicitudes'
 import { BadgeEstado, Boton, Campo, AreaTexto, Selector, Modal, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import { type Intervencion, listarIntervenciones } from '../../../lib/intervenciones'
+import ModalAsignar from './ModalAsignar'
 
 const PRIORIDADES = ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'] as const
 
@@ -32,9 +34,11 @@ export default function Detalle() {
   const [solicitud, setSolicitud] = useState<Solicitud | null>(null)
   const [eventos, setEventos] = useState<EventoSolicitud[]>([])
   const [notas, setNotas] = useState<NotaSolicitud[]>([])
+  const [intervenciones, setIntervenciones] = useState<Intervencion[]>([])
   const [error, setError] = useState<string | null>(null)
   const [accion, setAccion] = useState<AccionModal | null>(null)
   const [mensaje, setMensaje] = useState<string | null>(null)
+  const [modalAsignarAbierto, setModalAsignarAbierto] = useState(false)
 
   const cargar = useCallback(async () => {
     if (!id) return
@@ -51,6 +55,9 @@ export default function Detalle() {
         try {
           const listaNotas = await get<{ data: NotaSolicitud[] }>(`/solicitudes/${id}/notas`)
           setNotas(listaNotas.data)
+        } catch { /* 403 si el rol no lo permite */ }
+        try {
+          setIntervenciones(await listarIntervenciones(id))
         } catch { /* 403 si el rol no lo permite */ }
       }
     } catch (e) {
@@ -146,7 +153,7 @@ export default function Detalle() {
         },
       )
     }
-    if (estado === 'APROBADA' || estado === 'RESUELTA') {
+    if (estado === 'APROBADA' || estado === 'ASIGNADA' || estado === 'RESUELTA') {
       acciones.push({
         titulo: 'Cancelar solicitud',
         texto: 'La cancelación requiere un motivo y queda auditada.',
@@ -195,7 +202,33 @@ export default function Detalle() {
             {solicitud.constanciaAceptacion && (
               <p className="mt-3 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">Constancia de aceptación: {solicitud.constanciaAceptacion}</p>
             )}
+            {solicitud.resolucion && (
+              <p className="mt-3 rounded-md bg-teal-50 p-3 text-sm text-teal-800">Resolución: {solicitud.resolucion}</p>
+            )}
           </Tarjeta>
+
+          {coordina && (
+            <Tarjeta titulo="Intervenciones">
+              {intervenciones.length === 0 ? (
+                <p className="text-sm text-tinta-500">Sin intervenciones registradas.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {intervenciones.map((i) => (
+                    <li key={i.id} className="rounded-md bg-lavanda p-3 text-sm">
+                      <p className="font-display font-bold">
+                        {i.tecnicoNombre ?? 'Técnico'} · {fechaLocal(i.inicio)}
+                        {i.fin ? ` → ${fechaLocal(i.fin)}` : ' · en proceso'}
+                      </p>
+                      {i.diagnostico && <p className="mt-1 whitespace-pre-wrap">Diagnóstico: {i.diagnostico}</p>}
+                      {i.actividades && <p className="mt-1 whitespace-pre-wrap">Actividades: {i.actividades}</p>}
+                      {i.resultado && <p className="mt-1 whitespace-pre-wrap">Resultado: {i.resultado}</p>}
+                      {i.observaciones && <p className="mt-1 whitespace-pre-wrap text-tinta-500">Observaciones: {i.observaciones}</p>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Tarjeta>
+          )}
 
           {coordina && (
             <Tarjeta titulo="Historial de auditoría">
@@ -247,10 +280,31 @@ export default function Detalle() {
                 </div>
               )}
               {estado === 'APROBADA' && (
-                <p className="mt-4 text-xs text-tinta-500">La asignación de técnico llega en la fase 3.</p>
+                <div className="mt-4 border-t border-tinta-900/10 pt-4">
+                  <Boton variante="primario" onClick={() => setModalAsignarAbierto(true)}>
+                    Asignar técnico
+                  </Boton>
+                </div>
+              )}
+              {estado === 'ASIGNADA' && (
+                <div className="mt-4 border-t border-tinta-900/10 pt-4">
+                  <Boton variante="secundario" onClick={() => setModalAsignarAbierto(true)}>
+                    Reasignar técnico
+                  </Boton>
+                </div>
               )}
               {estado === 'RESUELTA' && (
-                <p className="mt-4 text-xs text-tinta-500">El cierre llega en la fase 3.</p>
+                <div className="mt-4 border-t border-tinta-900/10 pt-4">
+                  <Boton
+                    onClick={() => setAccion({
+                      titulo: 'Cerrar solicitud',
+                      texto: 'El cierre es definitivo y exige la resolución documentada de la intervención.',
+                      ejecutar: () => patch(`/solicitudes/${id}/estado`, { estado: 'CERRADA' }),
+                    })}
+                  >
+                    Cerrar solicitud
+                  </Boton>
+                </div>
               )}
             </Tarjeta>
           )}
@@ -344,6 +398,22 @@ export default function Detalle() {
             </div>
           </form>
         </Modal>
+      )}
+
+      {modalAsignarAbierto && solicitud && (
+        <ModalAsignar
+          solicitud={solicitud}
+          abierto={modalAsignarAbierto}
+          onCerrar={() => setModalAsignarAbierto(false)}
+          onExito={async () => {
+            setMensaje(
+              solicitud.estado === 'ASIGNADA'
+                ? 'Técnico reasignado exitosamente.'
+                : 'Técnico asignado exitosamente.'
+            )
+            await cargar()
+          }}
+        />
       )}
     </section>
   )

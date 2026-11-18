@@ -3,7 +3,7 @@
 **Proyecto:** ServiGest Ecuador P0  
 **Fase:** Técnico, Cliente, Intervenciones y Dashboard  
 **Rama:** `feature/technician-client`  
-**Estado:** Planificada  
+**Estado:** En progreso  
 **Fecha:** 2026-11-17
 
 ---
@@ -187,7 +187,8 @@ web/src/app/pages/solicitudes/
 - `POST /api/solicitudes/:id/adjuntos` — Subir
 - `POST /api/intervenciones/:id/adjuntos` — Subir evidencia
 - `GET /api/adjuntos/:id/descargar` — Descargar con streaming
-- `DELETE /api/adjuntos/:id` — Eliminar
+
+*(Nota: En P0 no se incluye borrado de adjuntos, conforme a las reglas del proyecto).*
 
 **Validaciones:**
 - Magic bytes: JPEG `[0xFF, 0xD8, 0xFF]`, PNG `[0x89, 0x50, 0x4E, 0x47]`, PDF `[0x25, 0x50, 0x44, 0x46]`
@@ -371,6 +372,6 @@ npm test -- asignacion intervenciones adjuntos dashboard
 ---
 
 **Referencias:**
-- Acuerdo de Diseño: `docs/acuerdo-diseno.md`
-- Plan General: `docs/plan-implementacion.md`
+- Acuerdo de Diseño: `docs/acuerdo-diseno.md` (contexto histórico)
+- Plan General: `docs/plan-implementacion.md` (fuente de verdad)
 - Instrucciones: `AGENTS.md`

@@ -1,8 +1,8 @@
 # Plan de implementación — ServiGest P0
 
 **Fecha:** 2026-11-17  
-**Estado:** Fases 0, 1 y 2 completadas y alineadas con REST estricto. Siguiente: Fase 3 (técnico, cliente y dashboard).  
-**Fuente de diseño:** `docs/acuerdo-diseno.md` (prevalece sobre cualquier otra fuente).  
+**Estado:** Fases 0, 1 y 2 completadas; Fase 3 (técnico, cliente y dashboard) en curso.  
+**Fuentes de verdad:** Este documento y `docs/fase-3-plan.md` son las fuentes de verdad. `docs/acuerdo-diseno.md` aporta únicamente contexto histórico.  
 
 ---
 
@@ -31,7 +31,7 @@
 | 0 | `feature/landing-page` | ✅ Mergeada | Landing cerrada: fix visual, header responsive, build/lint, commit |
 | 1 | `feature/api-public-flow` | ✅ Implementada | Backend base + formulario público + seguimiento por token |
 | 2 | `feature/auth-coordinator` | ✅ Completada | Login, sesiones, RBAC, REST estricto, FSM unificada, bandeja y triaje del coordinador |
-| 3 | `feature/technician-client` | 🔄 Planificada | Asignación (agenda, franjas, SLA), intervenciones del técnico, portal del cliente, adjuntos y dashboard |
+| 3 | `feature/technician-client` | 🔄 En progreso | Asignación (agenda, franjas, SLA), intervenciones del técnico, portal del cliente, adjuntos y dashboard |
 | 4 | `feature/qa-demo` | ⏳ Pendiente | Suite completa (12 grupos de pruebas), seed definitivo con 15 casos, README y guion de demo |
 
 ---
@@ -236,7 +236,7 @@ Endpoints de administración protegidos para `ADMIN` (y consulta para `COORDINAD
 2. **`usuarios` (`/api/usuarios`):** Creación y edición de usuarios internos y clientes. Validación de email único (`citext`) y hash bcrypt.
 3. **`tecnicos` (`/api/tecnicos`):**
    - Habilitar técnico vinculado a usuario con rol `TECNICO`.
-   - Asignación de especialidades (`POST/DELETE /api/tecnicos/:id/especialidades`).
+   - Asignación de especialidades (`PUT /api/tecnicos/:id/especialidades` reemplaza el conjunto completo).
    - Gestión de franjas de disponibilidad semanal (`/api/tecnicos/:id/disponibilidad`), validando que `hora_inicio < hora_fin` y sin solapamiento en el mismo día.
 4. **`especialidades` y `categorias_servicio` (`/api/catalogos/...`):**
    - Configuración de categorías y su especialidad requerida.

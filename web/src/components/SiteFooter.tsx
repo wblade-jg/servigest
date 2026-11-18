@@ -5,7 +5,7 @@ export default function SiteFooter() {
     <footer className="bg-tinta-900 text-white/80">
       <div className="mx-auto grid max-w-6xl gap-8 px-6 py-12 sm:grid-cols-3">
         <div>
-          <img src="/servigest-logo.png" alt="ServiGest" className="h-9 w-auto" />
+          <img src="/servigest-logo-alt.png" alt="ServiGest" className="h-9 w-auto" />
           <p className="mt-3 text-sm leading-relaxed">
             Servicios tecnológicos gestionados y consultoría para pymes del
             Ecuador.

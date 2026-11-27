@@ -146,7 +146,16 @@ export default function Bandeja() {
 
       {!error && listado && listado.data.length > 0 && (
         <>
-          <TableContainer component={Paper} variant="outlined" sx={{ mt: 3 }}>
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={{
+              mt: 3,
+              borderTop: '3px solid',
+              borderTopColor: 'secondary.dark',
+              '& th': { bgcolor: 'background.paper' },
+            }}
+          >
             <Table sx={{ minWidth: 760 }}>
               <TableHead>
                 <TableRow>
@@ -161,18 +170,56 @@ export default function Bandeja() {
               </TableHead>
               <TableBody>
                 {listado.data.map((s: Solicitud) => (
-                  <TableRow key={s.id} hover>
-                    <TableCell>
-                      <MuiLink component={Link} to={`/app/solicitudes/${s.id}`} sx={{ fontWeight: 700 }}>
+                  <TableRow
+                    key={s.id}
+                    hover
+                    sx={{
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: 'action.hover' },
+                      '&:hover .codigo-solitud': { bgcolor: 'primary.main', color: 'common.white', borderColor: 'primary.main' },
+                    }}
+                    onClick={() => window.location.assign(`/app/solicitudes/${s.id}`)}
+                  >
+                    <TableCell sx={{ py: 1.25 }}>
+                      <MuiLink
+                        component={Link}
+                        to={`/app/solicitudes/${s.id}`}
+                        className="codigo-solitud"
+                        aria-label={`Ver expediente ${s.codigo}`}
+                        onClick={(evento) => evento.stopPropagation()}
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          minHeight: 32,
+                          px: 1,
+                          border: '1px solid',
+                          borderColor: 'primary.main',
+                          borderRadius: 1,
+                          bgcolor: 'background.paper',
+                          color: 'primary.dark',
+                          fontFamily: '"Archivo Variable", sans-serif',
+                          fontSize: 13,
+                          fontWeight: 800,
+                          letterSpacing: '0.01em',
+                          textDecoration: 'none',
+                          transition: 'all 160ms ease',
+                        }}
+                      >
                         {s.codigo}
                       </MuiLink>
                     </TableCell>
-                    <TableCell>{s.origen === 'PUBLICO' ? 'Público' : 'Cliente'}</TableCell>
-                    <TableCell>{s.categoriaNombre ?? '—'}</TableCell>
+                    <TableCell sx={{ color: 'text.secondary' }}>{s.origen === 'PUBLICO' ? 'Público' : 'Cliente'}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{s.categoriaNombre ?? '—'}</TableCell>
                     <TableCell><BadgeEstado estado={s.estado} texto={ETIQUETAS_ESTADO[s.estado] ?? s.estado} /></TableCell>
-                    <TableCell>{s.prioridad ? ETIQUETAS_PRIORIDAD[s.prioridad] : '—'}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{fechaLocal(s.fechaCreacion)}</TableCell>
-                    <TableCell>{s.tecnicoNombre ?? 'Sin asignar'}</TableCell>
+                    <TableCell sx={{ fontWeight: s.prioridad ? 700 : 400, color: s.prioridad ? 'text.primary' : 'text.secondary' }}>
+                      {s.prioridad ? ETIQUETAS_PRIORIDAD[s.prioridad] : '—'}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap', color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
+                      {fechaLocal(s.fechaCreacion)}
+                    </TableCell>
+                    <TableCell sx={{ color: s.tecnicoNombre ? 'text.primary' : 'text.secondary' }}>
+                      {s.tecnicoNombre ?? 'Sin asignar'}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

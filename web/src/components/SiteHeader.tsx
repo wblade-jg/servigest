@@ -33,10 +33,9 @@ export default function SiteHeader() {
       position="sticky"
       color="inherit"
       sx={{
-        bgcolor: 'rgba(252,251,248,0.96)',
-        backdropFilter: 'blur(12px)',
+        bgcolor: tinta[900],
         borderBottom: '1px solid',
-        borderColor: 'divider',
+        borderColor: 'rgba(255,255,255,0.12)',
       }}
     >
       <Container maxWidth="lg">
@@ -50,7 +49,7 @@ export default function SiteHeader() {
               alignItems: 'center',
               gap: 1.25,
               mr: 'auto',
-              color: tinta[950],
+              color: 'common.white',
               textDecoration: 'none',
             }}
           >
@@ -61,7 +60,7 @@ export default function SiteHeader() {
               sx={{
                 height: { xs: 34, sm: 38 },
                 width: 'auto',
-                filter: 'brightness(0) saturate(100%)',
+                filter: 'brightness(0) invert(1)',
               }}
             />
           </Box>
@@ -85,9 +84,9 @@ export default function SiteHeader() {
                   sx={{
                     px: 1.5,
                     minHeight: 40,
-                    color: activo ? 'primary.main' : 'text.secondary',
-                    bgcolor: activo ? 'action.hover' : 'transparent',
-                    '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
+                    color: activo ? 'common.white' : 'rgba(255,255,255,0.72)',
+                    bgcolor: activo ? 'rgba(255,255,255,0.10)' : 'transparent',
+                    '&:hover': { color: 'common.white', bgcolor: 'rgba(255,255,255,0.10)' },
                   }}
                 >
                   {e.texto}
@@ -104,10 +103,15 @@ export default function SiteHeader() {
               pl: 2,
               ml: 0.5,
               borderLeft: '1px solid',
-              borderColor: 'divider',
+              borderColor: 'rgba(255,255,255,0.14)',
             }}
           >
-            <Button component={Link} to="/login" variant="text" color="secondary" sx={{ minWidth: 0, px: 1 }}>
+            <Button
+              component={Link}
+              to="/login"
+              variant="text"
+              sx={{ minWidth: 0, px: 1, color: 'rgba(255,255,255,0.78)' }}
+            >
               Portal
             </Button>
             <Button
@@ -124,7 +128,7 @@ export default function SiteHeader() {
           <IconButton
             aria-label="Abrir menú"
             onClick={() => setMovilAbierto(true)}
-            sx={{ display: { xs: 'inline-flex', md: 'none' }, color: tinta[900] }}
+            sx={{ display: { xs: 'inline-flex', md: 'none' }, color: 'common.white' }}
           >
             <MenuOutlined />
           </IconButton>
@@ -147,7 +151,7 @@ export default function SiteHeader() {
               sx={{
                 height: 34,
                 width: 'auto',
-                filter: 'brightness(0) saturate(100%)',
+                filter: 'brightness(0) invert(1)',
               }}
             />
             <IconButton aria-label="Cerrar menú" onClick={() => setMovilAbierto(false)}>

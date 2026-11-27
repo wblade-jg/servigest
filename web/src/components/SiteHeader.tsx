@@ -109,10 +109,19 @@ export default function SiteHeader() {
             <Button
               component={Link}
               to="/login"
-              variant="text"
-              sx={{ minWidth: 0, px: 1, color: 'rgba(255,255,255,0.78)' }}
+              variant="outlined"
+              sx={{
+                minWidth: 0,
+                px: 1.5,
+                color: 'common.white',
+                borderColor: 'rgba(255,255,255,0.48)',
+                '&:hover': {
+                  borderColor: 'common.white',
+                  bgcolor: 'rgba(255,255,255,0.08)',
+                },
+              }}
             >
-              Portal
+              Ingresar al portal
             </Button>
             <Button
               component={Link}

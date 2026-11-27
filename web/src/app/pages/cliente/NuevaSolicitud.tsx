@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Box, Button, Card, CardContent, Link as MuiLink, Stack, Typography } from '@mui/material'
+import ArrowBackOutlined from '@mui/icons-material/ArrowBackOutlined'
 import { get, post, ApiError } from '../../../lib/api'
 import { useAuth } from '../../../lib/auth'
 import type { Categoria, CreacionSolicitud } from '../../../lib/solicitudes'
-import { Boton, Campo, Entrada, AreaTexto, Selector, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import { Boton, Campo, Entrada, AreaTexto, Selector, Cargando, ErrorPanel, Pagina } from '../../../components/ui/primitivos'
 
 // Formulario corporativo: el backend fuerza origen CLIENTE y la organización
 // de la sesión, independientemente de lo que envíe el navegador.
@@ -55,47 +57,56 @@ export default function NuevaSolicitud () {
 
   if (resultado) {
     return (
-      <section className="mx-auto max-w-2xl px-6 py-16">
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-8">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-emerald-800">Solicitud creada</h1>
-          <p className="mt-4 text-tinta-700">
-            Quedó registrada con el código <strong className="font-display">{resultado.codigo}</strong> en estado{' '}
-            <strong>Recibida</strong>. Coordinación la revisará antes de aprobarla y asignar un técnico.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to={`/app/mis-solicitudes/${resultado.id}`} className="rounded-md bg-violeta-500 px-4 py-2 font-display text-sm font-bold text-white hover:bg-violeta-700">
-              Ver detalle
-            </Link>
-            <Boton variante="secundario" onClick={() => navegar('/app/mis-solicitudes')}>
-              Ir a mis solicitudes
-            </Boton>
-          </div>
-        </div>
-      </section>
+      <Pagina maxWidth="sm">
+        <Card variant="outlined" sx={{ borderColor: 'success.main', bgcolor: 'success.light' }}>
+          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+            <Typography variant="h2" sx={{ color: 'success.dark' }}>Solicitud creada</Typography>
+            <Typography variant="body1" sx={{ mt: 2 }}>
+              Quedó registrada con el código <strong>{resultado.codigo}</strong> en estado{' '}
+              <strong>Recibida</strong>. Coordinación la revisará antes de aprobarla y asignar un técnico.
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 3 }}>
+              <Button component={Link} to={`/app/mis-solicitudes/${resultado.id}`} variant="contained">
+                Ver detalle
+              </Button>
+              <Boton variante="secundario" onClick={() => navegar('/app/mis-solicitudes')}>
+                Ir a mis solicitudes
+              </Boton>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Pagina>
     )
   }
 
   return (
-    <section className="mx-auto max-w-2xl px-6 py-10">
-      <Link to="/app/mis-solicitudes" className="text-sm text-violeta-500 hover:underline">← Mis solicitudes</Link>
-      <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">Nueva solicitud</h1>
-      <p className="mt-2 text-sm text-tinta-700">
+    <Pagina maxWidth="sm">
+      <MuiLink
+        component={Link}
+        to="/app/mis-solicitudes"
+        variant="body2"
+        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+      >
+        <ArrowBackOutlined sx={{ fontSize: 16 }} /> Mis solicitudes
+      </MuiLink>
+      <Typography variant="h2" sx={{ mt: 1.5 }}>Nueva solicitud</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
         Describe el requerimiento de tu organización. La prioridad final la define coordinación al aprobar.
-      </p>
+      </Typography>
 
-      {error && <div className="mt-6"><ErrorPanel mensaje={error} /></div>}
-      {!categorias && !error && <div className="mt-8"><Cargando texto="Cargando categorías…" /></div>}
+      {error && <Box sx={{ mt: 3 }}><ErrorPanel mensaje={error} /></Box>}
+      {!categorias && !error && <Box sx={{ mt: 3 }}><Cargando texto="Cargando categorías…" /></Box>}
 
       {categorias && (
-        <form onSubmit={enviar} className="mt-8 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+        <Stack component="form" onSubmit={enviar} spacing={2.5} sx={{ mt: 4 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
             <Campo label="Nombre de contacto">
               <Entrada name="contactoNombre" required defaultValue={usuario?.nombre ?? ''} />
             </Campo>
             <Campo label="Teléfono">
               <Entrada name="contactoTelefono" required placeholder="+593 99 123 4567" />
             </Campo>
-          </div>
+          </Box>
           <Campo label="Correo electrónico">
             <Entrada name="contactoEmail" type="email" required defaultValue={usuario?.email ?? ''} />
           </Campo>
@@ -117,12 +128,12 @@ export default function NuevaSolicitud () {
               {PRIORIDADES.map((p) => <option key={p} value={p}>{p}</option>)}
             </Selector>
           </Campo>
-          <div className="flex justify-end gap-2">
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
             <Boton type="button" variante="secundario" onClick={() => navegar('/app/mis-solicitudes')}>Cancelar</Boton>
             <Boton type="submit" disabled={enviando}>{enviando ? 'Creando…' : 'Crear solicitud'}</Boton>
-          </div>
-        </form>
+          </Stack>
+        </Stack>
       )}
-    </section>
+    </Pagina>
   )
 }

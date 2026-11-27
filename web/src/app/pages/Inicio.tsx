@@ -1,25 +1,24 @@
 import { Link } from 'react-router-dom'
+import { Box, Button, Card, CardContent, Container, Grid, Stack, Typography } from '@mui/material'
 import Hero from '../../components/Hero'
+import { lavandaHonda } from '../../theme'
 
 const lineas = [
   {
     nombre: 'Soporte técnico',
-    descripcion:
-      'Diagnóstico y resolución de incidencias de equipos, redes y sistemas.',
+    descripcion: 'Diagnóstico y resolución de incidencias de equipos, redes y sistemas.',
     modalidad: 'Por intervención o suscripción',
     imagen: '/servicio-soporte.png',
   },
   {
     nombre: 'Mantenimiento y prevención',
-    descripcion:
-      'Inspecciones y actividades planificadas para reducir fallos operativos.',
+    descripcion: 'Inspecciones y actividades planificadas para reducir fallos operativos.',
     modalidad: 'Principalmente suscripción',
     imagen: '/servicio-mantenimiento.png',
   },
   {
     nombre: 'Consultoría y optimización',
-    descripcion:
-      'Evaluación de infraestructura y procesos, con mejoras cotizadas por separado.',
+    descripcion: 'Evaluación de infraestructura y procesos, con mejoras cotizadas por separado.',
     modalidad: 'Proyecto o acompañamiento',
     imagen: '/servicio-consultoria.png',
   },
@@ -28,7 +27,7 @@ const lineas = [
 const pasos = [
   {
     titulo: 'Envías tu requerimiento',
-    texto: 'Describe la necesidad desde el formulario público; no hace falta registrarse.',
+    texto: 'Describe la necesidad desde el formulario público; no hace falta registrarte.',
   },
   {
     titulo: 'Recibes un código de seguimiento',
@@ -49,92 +48,90 @@ export default function Inicio() {
     <>
       <Hero />
 
-      <section className="mx-auto max-w-6xl px-6 py-20" aria-labelledby="servicios">
-        <h2
-          id="servicios"
-          className="max-w-3xl font-display text-3xl font-bold tracking-tight sm:text-4xl"
-        >
+      <Container maxWidth="lg" component="section" aria-labelledby="servicios" sx={{ py: { xs: 8, md: 10 } }}>
+        <Typography id="servicios" variant="h2" sx={{ maxWidth: 760 }}>
           Tres líneas de servicio, una sola operación centralizada.
-        </h2>
-        <dl className="mt-12 grid gap-6 sm:grid-cols-3">
-          {lineas.map((l) => (
-            <div
-              key={l.nombre}
-              className="flex flex-col rounded-lg border border-tinta-900/15 bg-white overflow-hidden"
-            >
-              <div className="flex flex-1 flex-col bg-white">
-                <img
-                  src={l.imagen}
-                  alt=""
-                  className="h-48 w-full object-contain"
-                />
-              </div>
-              <div className="flex flex-1 flex-col border-t border-tinta-900/10 bg-white p-6">
-                <dt className="font-display text-lg font-bold">{l.nombre}</dt>
-                <dd className="mt-2 flex-1 text-tinta-700">{l.descripcion}</dd>
-                <dd className="mt-4 text-sm text-violeta-500">{l.modalidad}</dd>
-              </div>
-            </div>
+        </Typography>
+
+        <Grid container spacing={3} sx={{ mt: 4 }}>
+          {lineas.map((linea) => (
+            <Grid key={linea.nombre} size={{ xs: 12, sm: 4 }}>
+              <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <Box
+                    component="img"
+                    src={linea.imagen}
+                    alt=""
+                    sx={{ display: 'block', width: '100%', height: 160, objectFit: 'contain' }}
+                  />
+                </Box>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <Typography variant="h5">{linea.nombre}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1, flex: 1 }}>
+                    {linea.descripcion}
+                  </Typography>
+                  <Typography variant="caption" sx={{ mt: 2, color: 'primary.main', fontWeight: 600 }}>
+                    {linea.modalidad}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
           ))}
-        </dl>
-        <p className="mt-6 text-sm text-tinta-500">
-          Las solicitudes se gestionan desde una sola plataforma: revisión,
-          asignación por especialidad, intervenciones documentadas y estado en
-          línea.
-        </p>
-      </section>
+        </Grid>
 
-      <section className="bg-lavanda-honda" aria-labelledby="como-funciona">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <h2
-            id="como-funciona"
-            className="max-w-3xl font-display text-3xl font-bold tracking-tight sm:text-4xl"
-          >
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 3, maxWidth: 760 }}>
+          Las solicitudes se gestionan desde una sola plataforma: revisión, asignación por especialidad,
+          intervenciones documentadas y estado en línea.
+        </Typography>
+      </Container>
+
+      <Box component="section" aria-labelledby="como-funciona" sx={{ bgcolor: lavandaHonda }}>
+        <Container maxWidth="lg" sx={{ py: { xs: 8, md: 10 } }}>
+          <Typography id="como-funciona" variant="h2" sx={{ maxWidth: 760 }}>
             Cómo funciona sin suscripción.
-          </h2>
-          <ol className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-            {pasos.map((p, i) => (
-              <li key={p.titulo}>
-                <span className="font-display text-3xl font-bold text-violeta-500">
-                  {i + 1}
-                </span>
-                <h3 className="mt-2 font-display text-lg font-bold">
-                  {p.titulo}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-tinta-700">
-                  {p.texto}
-                </p>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-10 max-w-2xl text-sm text-tinta-500">
-            Enviar el formulario no implica la aceptación automática del
-            trabajo: toda prestación queda sujeta a evaluación, cotización y
-            aceptación.
-          </p>
-        </div>
-      </section>
+          </Typography>
 
-      <section className="mx-auto max-w-6xl px-6 py-20" aria-labelledby="cta-final">
-        <div className="border border-tinta-900/15 bg-white p-10 sm:p-14">
-          <h2
-            id="cta-final"
-            className="max-w-2xl font-display text-3xl font-bold tracking-tight sm:text-4xl"
-          >
-            Cuéntanos qué necesita tu empresa.
-          </h2>
-          <p className="mt-4 max-w-2xl text-tinta-700">
-            Completa el formulario en pocos minutos. Recibirás un código para
-            seguir el estado de tu solicitud en todo momento.
-          </p>
-          <Link
-            to="/solicitar"
-            className="mt-8 inline-block rounded-md bg-violeta-500 px-6 py-3 font-display text-sm font-bold text-white transition-colors hover:bg-violeta-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violeta-500"
-          >
-            Crear una solicitud
-          </Link>
-        </div>
-      </section>
+          <Grid container spacing={{ xs: 4, md: 3 }} sx={{ mt: 4 }}>
+            {pasos.map((paso, i) => (
+              <Grid key={paso.titulo} size={{ xs: 12, sm: 6, lg: 3 }}>
+                <Typography sx={{ fontFamily: '"Archivo Variable", sans-serif', fontSize: 28, fontWeight: 700, color: 'primary.main' }}>
+                  {i + 1}
+                </Typography>
+                <Typography variant="h6" sx={{ mt: 1 }}>
+                  {paso.titulo}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {paso.texto}
+                </Typography>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 5, maxWidth: 640 }}>
+            Enviar el formulario no implica la aceptación automática del trabajo: toda prestación queda
+            sujeta a evaluación, cotización y aceptación.
+          </Typography>
+        </Container>
+      </Box>
+
+      <Container maxWidth="lg" component="section" aria-labelledby="cta-final" sx={{ py: { xs: 8, md: 10 } }}>
+        <Card variant="outlined">
+          <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+            <Typography id="cta-final" variant="h2" sx={{ maxWidth: 640 }}>
+              Cuéntanos qué necesita tu empresa.
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 2, maxWidth: 640 }}>
+              Completa el formulario en pocos minutos. Recibirás un código para seguir el estado de tu
+              solicitud en todo momento.
+            </Typography>
+            <Stack direction="row" sx={{ mt: 3 }}>
+              <Button component={Link} to="/solicitar" variant="contained" size="large">
+                Crear una solicitud
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Container>
     </>
   )
 }

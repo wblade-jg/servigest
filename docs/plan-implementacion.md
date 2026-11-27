@@ -18,7 +18,7 @@
 | Fase 2 — FSM Declarativa | ✅ Motor de transiciones unificado en `api/src/modules/solicitudes/service.js` basado en tabla declarativa con validación de roles, guards contextuales, auditoría atómica en `eventos_solicitud` y notificaciones SSE estrictamente post-commit. |
 | Fase 2 — Ciclo de Revisión | ✅ `REQUIERE_INFORMACION → EN_REVISION` exige nota interna documentando la gestión realizada. Se eliminó la aprobación directa desde `REQUIERE_INFORMACION`, requiriendo volver primero a `EN_REVISION`. |
 | Fase 2 — Creación Interna | ✅ Solicitudes creadas por Coordinador/Admin mediante `POST /api/solicitudes` se guardan con origen `PUBLICO` y `organizacion_nombre`. Las creadas por Cliente usan origen `CLIENTE` con su `organizacion_id`. |
-| Fase 2 — Frontend | ✅ Primitivos locales con Tailwind CSS. Vistas de `Bandeja.tsx` y `Detalle.tsx` con modales interactivos para capturar datos requeridos según la transición. |
+| Fase 2 — Frontend | ✅ Vistas de `Bandeja.tsx` y `Detalle.tsx` con modales interactivos para capturar datos requeridos según la transición. UI migrada de Tailwind CSS a Material UI 9 con tema propio (ver §4.3). |
 | Fase 2 — Demo Seed | ✅ `seeds/003_usuarios_demo.sql` con Admin, Coordinador y 2 Clientes (contraseña: `Demo1234!`). |
 | Backend — Módulos | ✅ API migrada a ESM nativo (`"type": "module"`): imports con extensión `.js`, sin `require`/`module.exports`, `__dirname` reemplazado por `import.meta.url` y Jest en modo ESM (`--experimental-vm-modules`). |
 
@@ -94,6 +94,16 @@
 - UI implementada en `web/src/app/pages/solicitudes/` (`Bandeja.tsx`, `Detalle.tsx`) con modales contextuales por acción.
 - Pruebas automatizadas en `api/tests/`: 65 pruebas superadas (100% éxito en suites `auth`, `solicitudes`, `public`, `sse`).
 - Build de producción frontend (`web`): `tsc -b && vite build` sin errores.
+
+#### Migración a Material UI (decisión de stack)
+
+- **Decisión:** la UI usa **Material UI 9** con **Emotion** y un **tema propio** (`web/src/theme.ts`). Se retiraron Tailwind CSS y su plugin de Vite. No se instala MUI X: las entradas nativas de fecha/hora se conservan.
+- **Identidad visual:** dirección «expediente técnico» — fondo lavanda, superficies papel, reglas de 1 px en lugar de sombras, tipografía Archivo para interfaz y Source Serif 4 para texto largo, y un único acento violeta para acción y selección.
+- **Tipografías:** autoalojadas con Fontsource (`@fontsource-variable/archivo`, `@fontsource-variable/source-serif-4`); se eliminó la carga desde Google Fonts en `index.html`.
+- **Componente firma:** `RielEstado` representa el avance de la solicitud sobre la máquina de estados y sustituye la línea de tiempo improvisada.
+- **Primitivos:** `web/src/components/ui/primitivos.tsx` envuelve MUI (`Boton`, `Campo`, `Entrada`, `AreaTexto`, `Selector`, `Modal`, `Tarjeta`, `BadgeEstado`, `EstadoVacio`, etc.) y concentra la identidad visual.
+- **Accesibilidad:** los modales usan `Dialog` de MUI (foco atrapado, cierre con Escape y bloqueo de scroll); se desactiva el ripple y se mantienen etiquetas en minúscula/mixta, sin mayúsculas forzadas.
+- **Validación:** `npm run lint` y `npm run build` en `web/`; no hay pruebas automatizadas de frontend, la demo se valida con el seed.
 
 ---
 

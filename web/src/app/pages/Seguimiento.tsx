@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
+import { Alert, Box, Card, CardContent, Skeleton, Stack, Typography } from '@mui/material'
 import { get, ApiError } from '../../lib/api'
 import { useSse } from '../../lib/sse'
 import {
@@ -8,16 +9,10 @@ import {
   ETIQUETAS_PRIORIDAD,
   fechaLocal,
 } from '../../lib/solicitudes'
+import { Dato, Pagina } from '../../components/ui/primitivos'
+import { RielEstado } from '../../components/ui/RielEstado'
 
 // Timeline público: solo estado y coordinación, sin notas, adjuntos ni contacto.
-const ETAPAS = ['RECIBIDA', 'EN_REVISION', 'APROBADA', 'ASIGNADA', 'EN_PROCESO', 'RESUELTA', 'CERRADA']
-
-function etapaActual(estado: string): number {
-  const indice = ETAPAS.indexOf(estado)
-  if (indice >= 0) return indice
-  // Estados fuera de la línea (RECHAZADA, CANCELADA, REQUIERE_INFORMACION) se muestran aparte
-  return -1
-}
 
 export default function Seguimiento() {
   const { token } = useParams<{ token: string }>()
@@ -49,89 +44,74 @@ export default function Seguimiento() {
 
   if (error) {
     return (
-      <section className="mx-auto max-w-2xl px-6 py-16">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-8">
-          <h1 className="font-display text-2xl font-bold text-red-800">Seguimiento no disponible</h1>
-          <p className="mt-3 text-red-700">{error}</p>
-          <Link to="/" className="mt-6 inline-block text-violeta-500 underline">Volver al inicio</Link>
-        </div>
-      </section>
+      <Pagina maxWidth="sm">
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+        <Typography component={Link} to="/" variant="body2" sx={{ color: 'primary.main', fontWeight: 600 }}>
+          Volver al inicio
+        </Typography>
+      </Pagina>
     )
   }
 
   if (!datos) {
     return (
-      <section className="mx-auto max-w-2xl px-6 py-16">
-        <p className="text-tinta-700">Cargando seguimiento…</p>
-      </section>
+      <Pagina maxWidth="sm">
+        <Skeleton variant="text" width="40%" height={44} />
+        <Skeleton variant="text" width="30%" />
+        <Skeleton variant="rectangular" height={180} sx={{ mt: 3, borderRadius: 1 }} />
+      </Pagina>
     )
   }
 
-  const etapa = etapaActual(datos.estado)
-  const fueraDeLinea = etapa === -1
-
   return (
-    <section className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-display text-4xl font-bold tracking-tight">Seguimiento</h1>
-      <p className="mt-2 text-tinta-700">Solicitud <strong className="font-display">{datos.codigo}</strong></p>
+    <Pagina maxWidth="sm">
+      <Typography variant="h1">Seguimiento</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        Solicitud{' '}
+        <Typography component="span" sx={{ fontFamily: '"Archivo Variable", sans-serif', fontWeight: 700, color: 'text.primary' }}>
+          {datos.codigo}
+        </Typography>
+      </Typography>
 
-      <div className="mt-8 rounded-lg border border-tinta-900/10 bg-white p-6">
-        <p className="text-sm text-tinta-500">Estado actual</p>
-        <p className="mt-1 font-display text-2xl font-bold">
-          {ETIQUETAS_ESTADO[datos.estado] ?? datos.estado}
-        </p>
-        <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-tinta-500">Prioridad</dt>
-            <dd>{datos.prioridad ? (ETIQUETAS_PRIORIDAD[datos.prioridad] ?? datos.prioridad) : 'Por definir en revisión'}</dd>
-          </div>
-          <div>
-            <dt className="text-tinta-500">Fecha de creación</dt>
-            <dd>{fechaLocal(datos.fechaCreacion)}</dd>
-          </div>
-          <div>
-            <dt className="text-tinta-500">Fecha objetivo</dt>
-            <dd>{fechaLocal(datos.fechaObjetivo)}</dd>
-          </div>
-          <div>
-            <dt className="text-tinta-500">Fecha programada</dt>
-            <dd>{fechaLocal(datos.fechaProgramada)}</dd>
-          </div>
-          <div>
-            <dt className="text-tinta-500">Técnico asignado</dt>
-            <dd>{datos.tecnicoAsignado ?? 'Sin asignar'}</dd>
-          </div>
-        </dl>
-      </div>
+      <Card variant="outlined" sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+            Estado actual
+          </Typography>
+          <Typography variant="h3" sx={{ mt: 0.5 }}>
+            {ETIQUETAS_ESTADO[datos.estado] ?? datos.estado}
+          </Typography>
 
-      {fueraDeLinea ? (
-        <p className="mt-6 rounded-md bg-lavanda-honda px-4 py-3 text-sm text-tinta-700">
-          Esta solicitud no avanza por la línea de tiempo estándar (por ejemplo, rechazada o cancelada).
-        </p>
-      ) : (
-        <ol className="mt-8 space-y-0">
-          {ETAPAS.map((e, i) => (
-            <li key={e} className="flex gap-4">
-              <div className="flex flex-col items-center">
-                <span
-                  className={`mt-1 h-3 w-3 rounded-full ${i <= etapa ? 'bg-violeta-500' : 'bg-tinta-900/15'}`}
-                />
-                {i < ETAPAS.length - 1 && (
-                  <span className={`h-8 w-px ${i < etapa ? 'bg-violeta-500' : 'bg-tinta-900/15'}`} />
-                )}
-              </div>
-              <div className={i <= etapa ? 'font-semibold' : 'text-tinta-500'}>
-                {ETIQUETAS_ESTADO[e]}
-                {i === etapa && <span className="ml-2 text-xs text-violeta-500">· actual</span>}
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mt: 3 }}>
+            <Dato
+              titulo="Prioridad"
+              valor={datos.prioridad ? (ETIQUETAS_PRIORIDAD[datos.prioridad] ?? datos.prioridad) : 'Por definir en revisión'}
+            />
+            <Dato titulo="Fecha de creación" valor={fechaLocal(datos.fechaCreacion)} />
+            <Dato titulo="Fecha objetivo" valor={fechaLocal(datos.fechaObjetivo)} />
+            <Dato titulo="Fecha programada" valor={fechaLocal(datos.fechaProgramada)} />
+            <Dato titulo="Técnico asignado" valor={datos.tecnicoAsignado ?? 'Sin asignar'} />
+          </Box>
+        </CardContent>
+      </Card>
 
-      <p className="mt-8 text-xs text-tinta-500">
-        La vista se actualiza en vivo. Guarda este enlace para volver a consultar.
-      </p>
-    </section>
+      <Box sx={{ mt: 4 }}>
+        <RielEstado
+          estado={datos.estado}
+          fechas={{
+            RECIBIDA: datos.fechaCreacion,
+            ASIGNADA: datos.fechaProgramada,
+          }}
+        />
+      </Box>
+
+      <Stack spacing={1} sx={{ mt: 4 }}>
+        <Typography variant="caption" color="text.secondary">
+          La vista se actualiza en vivo. Guarda este enlace para volver a consultar.
+        </Typography>
+      </Stack>
+    </Pagina>
   )
 }

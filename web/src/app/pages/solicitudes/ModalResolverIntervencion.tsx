@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Alert, Stack, Typography } from '@mui/material'
 import { ApiError } from '../../../lib/api'
 import {
   type Intervencion,
@@ -73,12 +74,12 @@ export default function ModalResolverIntervencion ({ intervencion, abierto, onCe
 
   return (
     <Modal titulo="Resolver intervención" abierto={abierto} onCerrar={onCerrar}>
-      <form className="space-y-4" onSubmit={enviar}>
-        <p className="text-sm text-tinta-700">
+      <Stack component="form" onSubmit={enviar} spacing={2}>
+        <Typography variant="body2" color="text.secondary">
           Documenta la intervención. Al resolver, la solicitud pasa a <strong>Resuelta</strong> y la
           resolución queda registrada en la solicitud.
-        </p>
-        {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
+        </Typography>
+        {error && <Alert severity="error">{error}</Alert>}
         <Campo label="Fin de la intervención" ayuda="Debe ser posterior al inicio de la intervención.">
           <Entrada type="datetime-local" name="fin" required defaultValue={ahoraLocal()} />
         </Campo>
@@ -94,11 +95,11 @@ export default function ModalResolverIntervencion ({ intervencion, abierto, onCe
         <Campo label="Observaciones (opcional)">
           <AreaTexto name="observaciones" placeholder="Notas adicionales, repuestos usados, recomendaciones…" />
         </Campo>
-        <div className="flex justify-end gap-2">
+        <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
           <Boton type="button" variante="secundario" onClick={onCerrar} disabled={enviando}>Cancelar</Boton>
           <Boton type="submit" disabled={enviando}>{enviando ? 'Guardando…' : 'Resolver intervención'}</Boton>
-        </div>
-      </form>
+        </Stack>
+      </Stack>
     </Modal>
   )
 }

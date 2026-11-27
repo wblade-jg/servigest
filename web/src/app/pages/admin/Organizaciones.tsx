@@ -1,7 +1,30 @@
 import { useCallback, useEffect, useState } from 'react'
+import {
+  Alert,
+  Box,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import { get, post, patch, del, ApiError } from '../../../lib/api'
 import type { Organizacion, Listado } from '../../../lib/admin'
-import { Boton, Campo, Entrada, AreaTexto, Modal, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import {
+  Boton,
+  Campo,
+  Entrada,
+  AreaTexto,
+  Modal,
+  Cargando,
+  ErrorPanel,
+  EstadoVacio,
+  Pagina,
+} from '../../../components/ui/primitivos'
 
 const LIMITE = 20
 
@@ -83,68 +106,70 @@ export default function Organizaciones() {
   const totalPaginas = listado ? Math.max(1, Math.ceil(listado.total / LIMITE)) : 1
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Organizaciones</h1>
-          <p className="mt-1 text-sm text-tinta-500">{listado ? `${listado.total} registros` : 'Cargando…'}</p>
-        </div>
+    <Pagina>
+      <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+        <Box>
+          <Typography variant="h2">Organizaciones</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {listado ? `${listado.total} registros` : 'Cargando…'}
+          </Typography>
+        </Box>
         <Boton onClick={abrirCrear}>Nueva organización</Boton>
-      </div>
+      </Stack>
 
-      <div className="mt-6">
+      <Box sx={{ mt: 3, maxWidth: 420 }}>
         <Entrada type="search" placeholder="Buscar por nombre o RUC…" value={q} onChange={(e) => setQ(e.target.value)} />
-      </div>
+      </Box>
 
-      {error && <div className="mt-6"><ErrorPanel mensaje={error} /></div>}
-      {!error && cargando && <div className="mt-6"><Cargando /></div>}
+      {error && <Box sx={{ mt: 3 }}><ErrorPanel mensaje={error} /></Box>}
+      {!error && cargando && <Box sx={{ mt: 3 }}><Cargando /></Box>}
       {!error && !cargando && listado && listado.data.length === 0 && (
-        <p className="mt-6 rounded-lg border border-tinta-900/10 bg-white p-6 text-tinta-500">No hay organizaciones.</p>
+        <Box sx={{ mt: 3 }}><EstadoVacio>No hay organizaciones.</EstadoVacio></Box>
       )}
 
       {!error && !cargando && listado && listado.data.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-tinta-900/10 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-tinta-900/10 text-xs uppercase tracking-wide text-tinta-500">
-              <tr>
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">RUC</th>
-                <th className="px-4 py-3">Teléfono</th>
-                <th className="px-4 py-3">Dirección</th>
-                <th className="px-4 py-3">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableContainer component={Paper} variant="outlined" sx={{ mt: 3 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Nombre</TableCell>
+                <TableCell>RUC</TableCell>
+                <TableCell>Teléfono</TableCell>
+                <TableCell>Dirección</TableCell>
+                <TableCell>Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {listado.data.map((org) => (
-                <tr key={org.id} className="border-b border-tinta-900/5 last:border-0 hover:bg-lavanda/60">
-                  <td className="px-4 py-3 font-display font-bold">{org.nombre}</td>
-                  <td className="px-4 py-3">{org.ruc ?? '—'}</td>
-                  <td className="px-4 py-3">{org.telefono ?? '—'}</td>
-                  <td className="px-4 py-3">{org.direccion ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <Boton variante="secundario" onClick={() => abrirEditar(org)}>Editar</Boton>
-                      <Boton variante="peligro" onClick={() => void desactivar(org.id)}>Desactivar</Boton>
-                    </div>
-                  </td>
-                </tr>
+                <TableRow key={org.id} hover>
+                  <TableCell sx={{ fontWeight: 700 }}>{org.nombre}</TableCell>
+                  <TableCell>{org.ruc ?? '—'}</TableCell>
+                  <TableCell>{org.telefono ?? '—'}</TableCell>
+                  <TableCell>{org.direccion ?? '—'}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      <Boton variante="secundario" size="small" onClick={() => abrirEditar(org)}>Editar</Boton>
+                      <Boton variante="peligro" size="small" onClick={() => void desactivar(org.id)}>Desactivar</Boton>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
 
       {listado && totalPaginas > 1 && (
-        <div className="mt-4 flex items-center justify-end gap-3 text-sm">
-          <Boton variante="secundario" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Boton>
-          <span className="text-tinta-500">Página {page} de {totalPaginas}</span>
-          <Boton variante="secundario" disabled={page >= totalPaginas} onClick={() => setPage((p) => p + 1)}>Siguiente</Boton>
-        </div>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'flex-end', mt: 2 }}>
+          <Boton variante="secundario" size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Boton>
+          <Typography variant="caption" color="text.secondary">Página {page} de {totalPaginas}</Typography>
+          <Boton variante="secundario" size="small" disabled={page >= totalPaginas} onClick={() => setPage((p) => p + 1)}>Siguiente</Boton>
+        </Stack>
       )}
 
       <Modal titulo={editando ? 'Editar organización' : 'Nueva organización'} abierto={modalAbierto} onCerrar={() => setModalAbierto(false)}>
-        <div className="space-y-4">
-          {errorForm && <p className="text-sm text-red-600">{errorForm}</p>}
+        <Stack spacing={2}>
+          {errorForm && <Alert severity="error">{errorForm}</Alert>}
           <Campo label="Nombre">
             <Entrada value={formulario.nombre} onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })} />
           </Campo>
@@ -157,12 +182,12 @@ export default function Organizaciones() {
           <Campo label="Dirección">
             <AreaTexto value={formulario.direccion} onChange={(e) => setFormulario({ ...formulario, direccion: e.target.value })} />
           </Campo>
-          <div className="flex justify-end gap-2 pt-2">
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', pt: 1 }}>
             <Boton variante="secundario" onClick={() => setModalAbierto(false)}>Cancelar</Boton>
             <Boton disabled={guardando} onClick={() => void guardar()}>{guardando ? 'Guardando…' : 'Guardar'}</Boton>
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </Modal>
-    </section>
+    </Pagina>
   )
 }

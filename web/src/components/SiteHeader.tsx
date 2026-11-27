@@ -12,7 +12,6 @@ import {
   ListItemText,
   Stack,
   Toolbar,
-  Typography,
 } from '@mui/material'
 import MenuOutlined from '@mui/icons-material/MenuOutlined'
 import CloseOutlined from '@mui/icons-material/CloseOutlined'
@@ -58,39 +57,13 @@ export default function SiteHeader() {
             <Box
               component="img"
               src="/servigest-logo.png"
-              alt=""
-              sx={{ height: { xs: 34, sm: 38 }, width: 'auto' }}
+              alt="ServiGest Ecuador"
+              sx={{
+                height: { xs: 34, sm: 38 },
+                width: 'auto',
+                filter: 'brightness(0) saturate(100%)',
+              }}
             />
-            <Box>
-              <Typography
-                component="span"
-                sx={{
-                  display: 'block',
-                  fontFamily: archivo,
-                  fontSize: { xs: 15, sm: 16 },
-                  fontWeight: 800,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                ServiGest
-              </Typography>
-              <Typography
-                component="span"
-                sx={{
-                  display: 'block',
-                  mt: 0.5,
-                  color: 'text.secondary',
-                  fontFamily: archivo,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '0.08em',
-                }}
-              >
-                ECUADOR
-              </Typography>
-            </Box>
           </Box>
 
           <Box
@@ -167,9 +140,16 @@ export default function SiteHeader() {
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
           <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-            <Typography sx={{ fontFamily: archivo, fontWeight: 800, letterSpacing: '-0.02em' }}>
-              ServiGest
-            </Typography>
+            <Box
+              component="img"
+              src="/servigest-logo.png"
+              alt="ServiGest Ecuador"
+              sx={{
+                height: 34,
+                width: 'auto',
+                filter: 'brightness(0) saturate(100%)',
+              }}
+            />
             <IconButton aria-label="Cerrar menú" onClick={() => setMovilAbierto(false)}>
               <CloseOutlined />
             </IconButton>

@@ -75,39 +75,48 @@ export default function Seguimiento() {
         </Typography>
       </Typography>
 
-      <Card variant="outlined" sx={{ mt: 3 }}>
-        <CardContent>
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-            Estado actual
+      <Card
+        variant="outlined"
+        sx={{
+          mt: 3,
+          bgcolor: 'secondary.dark',
+          borderColor: 'secondary.dark',
+          overflow: 'hidden',
+        }}
+      >
+        <CardContent sx={{ p: { xs: 3, sm: 4 }, '&:last-child': { pb: { xs: 3, sm: 4 } } }}>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.62)', fontWeight: 700 }}>
+            Estado actual de la solicitud
           </Typography>
-          <Box
+          <Typography
+            component="p"
             sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
               mt: 0.75,
-              px: 1.5,
-              py: 0.75,
-              bgcolor: 'primary.main',
+              mb: 0,
               color: 'common.white',
-              borderRadius: 1,
-              boxShadow: 'none',
+              fontFamily: '"Archivo Variable", sans-serif',
+              fontSize: { xs: 38, sm: 52 },
+              lineHeight: 1,
+              fontWeight: 800,
+              letterSpacing: '-0.035em',
             }}
           >
-            <Typography
-              component="span"
-              sx={{
-                fontFamily: '"Archivo Variable", sans-serif',
-                fontSize: { xs: 22, sm: 28 },
-                lineHeight: 1.1,
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              {ETIQUETAS_ESTADO[datos.estado] ?? datos.estado}
-            </Typography>
-          </Box>
+            {ETIQUETAS_ESTADO[datos.estado] ?? datos.estado}
+          </Typography>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mt: 3 }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+              gap: { xs: 1.5, sm: 2 },
+              mt: 4,
+              pt: 2.5,
+              borderTop: '1px solid',
+              borderColor: 'rgba(255,255,255,0.14)',
+              '& dt': { color: 'rgba(255,255,255,0.58)' },
+              '& dd': { color: 'common.white' },
+            }}
+          >
             <Dato
               titulo="Prioridad"
               valor={datos.prioridad ? (ETIQUETAS_PRIORIDAD[datos.prioridad] ?? datos.prioridad) : 'Por definir en revisión'}
@@ -120,7 +129,7 @@ export default function Seguimiento() {
         </CardContent>
       </Card>
 
-      <Box sx={{ mt: 4 }}>
+      <Box sx={{ mt: 4, px: { xs: 0.5, sm: 1 }, opacity: 0.72 }}>
         <RielEstado
           estado={datos.estado}
           fechas={{

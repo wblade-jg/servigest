@@ -42,10 +42,19 @@ export default function Hero() {
               </Button>
             </Stack>
 
-            <Card variant="outlined" sx={{ mt: 5, maxWidth: 560, bgcolor: 'background.default' }}>
-              <CardContent>
-                <Typography variant="h6">¿Ya enviaste una solicitud?</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Card
+              variant="outlined"
+              sx={{
+                mt: 5,
+                maxWidth: 620,
+                bgcolor: 'secondary.dark',
+                borderColor: 'secondary.dark',
+                boxShadow: 'none',
+              }}
+            >
+              <CardContent sx={{ p: { xs: 2.5, sm: 3 }, '&:last-child': { pb: { xs: 2.5, sm: 3 } } }}>
+                <Typography variant="h6" sx={{ color: 'common.white' }}>¿Ya enviaste una solicitud?</Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: 'rgba(255,255,255,0.68)' }}>
                   Ingresa el token de seguimiento que recibiste o pega tu enlace.
                 </Typography>
                 <Stack
@@ -62,10 +71,20 @@ export default function Hero() {
                     onChange={(e) => setToken(e.target.value)}
                     placeholder="Ej. tok-demo-fase3-00010 o tu token"
                     aria-label="Token de seguimiento"
-                    sx={{ flex: 1, fontFamily: 'monospace' }}
+                    sx={{
+                      flex: 1,
+                      fontFamily: 'monospace',
+                      bgcolor: 'common.white',
+                      borderColor: 'rgba(255,255,255,0.76)',
+                      color: 'text.primary',
+                    }}
                   />
-                  <Boton type="submit" variante="secundario">
-                    Consultar
+                  <Boton
+                    type="submit"
+                    variante="primario"
+                    sx={{ minWidth: { sm: 116 }, whiteSpace: 'nowrap' }}
+                  >
+                    Consultar estado
                   </Boton>
                 </Stack>
               </CardContent>

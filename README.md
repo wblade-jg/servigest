@@ -16,7 +16,7 @@ Plataforma web académica/demo para la gestión de servicios tecnológicos gesti
 |---|---|
 | Backend | Node.js + Express (ESM nativo) |
 | Base de datos | PostgreSQL 16 · SQL puro sin ORM |
-| Frontend | React 19 + Vite + TypeScript · Tailwind CSS |
+| Frontend | React 19 + Vite + TypeScript · Material UI 9 + Emotion |
 | Tiempo real | Server-Sent Events (SSE) |
 | Autenticación | Sesión persistida en PostgreSQL · Cookie httpOnly · CSRF |
 | Documentación API | OpenAPI / Swagger (`/api/docs`) |
@@ -90,6 +90,8 @@ npm run dev         # recarga automática con --watch
 cd web
 npm install
 npm run dev
+npm run build
+npm run lint
 ```
 
 ### Pruebas

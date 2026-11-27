@@ -1,15 +1,37 @@
 import { useCallback, useEffect, useState } from 'react'
+import {
+  Box,
+  Card,
+  CardContent,
+  LinearProgress,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import { ApiError } from '../../lib/api'
 import { useAuth, esInterno } from '../../lib/auth'
 import { useSse } from '../../lib/sse'
 import { obtenerDashboard, type DashboardData } from '../../lib/dashboard'
 import { ETIQUETAS_ESTADO, ETIQUETAS_PRIORIDAD } from '../../lib/solicitudes'
-import { Cargando, ErrorPanel } from '../../components/ui/primitivos'
+import { Cargando, ErrorPanel, Pagina, Tarjeta } from '../../components/ui/primitivos'
 
 // Dashboard operativo: internos ven métricas globales y carga por técnico;
 // el Cliente solo las métricas de su organización.
 
-export default function Dashboard () {
+type Tono = 'neutro' | 'verde' | 'ambar' | 'rojo'
+
+const TONOS: Record<Tono, string> = {
+  neutro: 'text.primary',
+  verde: 'success.main',
+  ambar: 'warning.main',
+  rojo: 'error.main',
+}
+
+export default function Dashboard() {
   const { usuario } = useAuth()
   const [datos, setDatos] = useState<DashboardData | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -31,46 +53,53 @@ export default function Dashboard () {
   useSse(canal, () => { void cargar() }, () => { void cargar() })
 
   if (error) {
-    return <section className="mx-auto max-w-5xl px-6 py-10"><ErrorPanel mensaje={error} /></section>
+    return (
+      <Pagina>
+        <ErrorPanel mensaje={error} />
+      </Pagina>
+    )
   }
   if (!datos) {
-    return <section className="mx-auto max-w-5xl px-6 py-10"><Cargando texto="Cargando dashboard…" /></section>
+    return (
+      <Pagina>
+        <Cargando texto="Cargando dashboard…" />
+      </Pagina>
+    )
   }
 
   const totalPrioridades = datos.porPrioridad.reduce((suma, p) => suma + p.total, 0)
   const totalSla = datos.sla.enPlazo + datos.sla.porVencer + datos.sla.vencidas
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
-      <p className="mt-2 text-sm text-tinta-700">
+    <Pagina>
+      <Typography variant="h2">Dashboard</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
         {esInterno(usuario)
           ? 'Métricas globales de la operación y cumplimiento de SLA.'
           : 'Métricas de las solicitudes de tu organización.'}
-      </p>
+      </Typography>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Tarjeta titulo="Solicitudes" valor={String(datos.total)} detalle="Total registradas" />
-        <Tarjeta titulo="En plazo" valor={String(datos.sla.enPlazo)} detalle="SLA con más de 24 h" tono="verde" />
-        <Tarjeta titulo="Por vencer" valor={String(datos.sla.porVencer)} detalle="SLA en las próximas 24 h" tono="ambar" />
-        <Tarjeta titulo="Vencidas" valor={String(datos.sla.vencidas)} detalle="SLA fuera de tiempo" tono="rojo" />
-      </div>
+      <Box
+        sx={{
+          mt: 3,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr 1fr', lg: 'repeat(4, 1fr)' },
+          gap: 2,
+        }}
+      >
+        <Kpi titulo="Solicitudes" valor={String(datos.total)} detalle="Total registradas" />
+        <Kpi titulo="En plazo" valor={String(datos.sla.enPlazo)} detalle="SLA con más de 24 h" tono="verde" />
+        <Kpi titulo="Por vencer" valor={String(datos.sla.porVencer)} detalle="SLA en las próximas 24 h" tono="ambar" />
+        <Kpi titulo="Vencidas" valor={String(datos.sla.vencidas)} detalle="SLA fuera de tiempo" tono="rojo" />
+      </Box>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Tarjeta
-          titulo="MTTR"
-          valor={datos.mttrHoras === null ? '—' : `${datos.mttrHoras} h`}
-          detalle="Promedio de resolución (30 días)"
-        />
-        <Tarjeta
-          titulo="Sin fecha objetivo"
-          valor={String(datos.sla.sinFecha)}
-          detalle="No terminales sin SLA calculado"
-        />
-      </div>
+      <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+        <Kpi titulo="MTTR" valor={datos.mttrHoras === null ? '—' : `${datos.mttrHoras} h`} detalle="Promedio de resolución (30 días)" />
+        <Kpi titulo="Sin fecha objetivo" valor={String(datos.sla.sinFecha)} detalle="No terminales sin SLA calculado" />
+      </Box>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <Panel titulo="Distribución por estado">
+      <Box sx={{ mt: 3, display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 3 }}>
+        <Tarjeta titulo="Distribución por estado">
           <Barras
             filas={datos.porEstado.map((e) => ({
               etiqueta: ETIQUETAS_ESTADO[e.estado] ?? e.estado,
@@ -79,9 +108,9 @@ export default function Dashboard () {
             total={datos.total}
             vacio="Sin solicitudes registradas."
           />
-        </Panel>
+        </Tarjeta>
 
-        <Panel titulo="Prioridad (no terminales)">
+        <Tarjeta titulo="Prioridad (no terminales)">
           <Barras
             filas={datos.porPrioridad.map((p) => ({
               etiqueta: ETIQUETAS_PRIORIDAD[p.prioridad] ?? p.prioridad,
@@ -90,99 +119,111 @@ export default function Dashboard () {
             total={totalPrioridades}
             vacio="Sin solicitudes abiertas."
           />
-          <p className="mt-3 text-xs text-tinta-500">
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
             {totalSla} solicitudes no terminales con SLA calculado.
-          </p>
-        </Panel>
-      </div>
+          </Typography>
+        </Tarjeta>
+      </Box>
 
       {datos.cargaTecnicos && (
-        <Panel titulo="Carga por técnico" className="mt-6">
+        <Tarjeta titulo="Carga por técnico" sx={{ mt: 3 }}>
           {datos.cargaTecnicos.length === 0 ? (
-            <p className="text-sm text-tinta-500">Sin solicitudes asignadas o en proceso.</p>
+            <Typography variant="body2" color="text.secondary">
+              Sin solicitudes asignadas o en proceso.
+            </Typography>
           ) : (
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-tinta-900/10 text-xs uppercase tracking-wide text-tinta-500">
-                  <th className="py-2 pr-4">Técnico</th>
-                  <th className="py-2">Solicitudes activas</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Técnico</TableCell>
+                  <TableCell align="right">Solicitudes activas</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {datos.cargaTecnicos.map((t) => (
-                  <tr key={t.tecnicoId} className="border-b border-tinta-900/5">
-                    <td className="py-2 pr-4">{t.nombre}</td>
-                    <td className="py-2 font-display font-bold">{t.total}</td>
-                  </tr>
+                  <TableRow key={t.tecnicoId}>
+                    <TableCell>{t.nombre}</TableCell>
+                    <TableCell align="right" sx={{ fontFamily: '"Archivo Variable", sans-serif', fontWeight: 700 }}>
+                      {t.total}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
-        </Panel>
+        </Tarjeta>
       )}
-    </section>
+    </Pagina>
   )
 }
 
-type Tono = 'neutro' | 'verde' | 'ambar' | 'rojo'
-
-const TONOS: Record<Tono, string> = {
-  neutro: 'text-tinta-900',
-  verde: 'text-emerald-700',
-  ambar: 'text-amber-700',
-  rojo: 'text-red-700',
-}
-
-function Tarjeta ({ titulo, valor, detalle, tono = 'neutro' }: {
+function Kpi({ titulo, valor, detalle, tono = 'neutro' }: {
   titulo: string
   valor: string
   detalle: string
   tono?: Tono
 }) {
   return (
-    <div className="rounded-lg border border-tinta-900/10 bg-white p-5">
-      <p className="text-xs uppercase tracking-wide text-tinta-500">{titulo}</p>
-      <p className={`mt-2 font-display text-3xl font-bold ${TONOS[tono]}`}>{valor}</p>
-      <p className="mt-1 text-xs text-tinta-500">{detalle}</p>
-    </div>
+    <Card variant="outlined">
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontWeight: 600 }}>
+          {titulo}
+        </Typography>
+        <Typography
+          sx={{
+            mt: 0.5,
+            fontFamily: '"Archivo Variable", sans-serif',
+            fontSize: { xs: 26, sm: 30 },
+            fontWeight: 700,
+            lineHeight: 1.1,
+            color: TONOS[tono],
+          }}
+        >
+          {valor}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+          {detalle}
+        </Typography>
+      </CardContent>
+    </Card>
   )
 }
 
-function Panel ({ titulo, className = '', children }: {
-  titulo: string
-  className?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className={`rounded-lg border border-tinta-900/10 bg-white p-6 ${className}`}>
-      <h2 className="font-display text-lg font-bold">{titulo}</h2>
-      <div className="mt-4">{children}</div>
-    </div>
-  )
-}
-
-function Barras ({ filas, total, vacio }: {
+function Barras({ filas, total, vacio }: {
   filas: Array<{ etiqueta: string; total: number }>
   total: number
   vacio: string
 }) {
-  if (filas.length === 0) return <p className="text-sm text-tinta-500">{vacio}</p>
+  if (filas.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        {vacio}
+      </Typography>
+    )
+  }
+
   return (
-    <ul className="space-y-3">
+    <Stack spacing={2}>
       {filas.map((fila) => {
         const porcentaje = total > 0 ? Math.round((fila.total / total) * 100) : 0
         return (
-          <li key={fila.etiqueta}>
-            <div className="flex items-baseline justify-between text-sm">
-              <span className="font-display font-bold">{fila.etiqueta}</span>
-              <span className="text-tinta-500">{fila.total}</span>
-            </div>
-            <div className="mt-1 h-2 rounded-full bg-lavanda-honda" role="img" aria-label={`${fila.etiqueta}: ${fila.total}`}>
-              <div className="h-2 rounded-full bg-violeta-500" style={{ width: `${porcentaje}%` }} />
-            </div>
-          </li>
+          <Box key={fila.etiqueta}>
+            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline', mb: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {fila.etiqueta}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {fila.total}
+              </Typography>
+            </Stack>
+            <LinearProgress
+              variant="determinate"
+              value={porcentaje}
+              aria-label={`${fila.etiqueta}: ${fila.total}`}
+            />
+          </Box>
         )
       })}
-    </ul>
+    </Stack>
   )
 }

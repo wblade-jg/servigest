@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Alert, Box, Button, Card, CardContent, Chip, Grid, Stack, Typography } from '@mui/material'
 import { get, ApiError } from '../../lib/api'
 import type { Categoria } from '../../lib/solicitudes'
+import { Cargando, Pagina } from '../../components/ui/primitivos'
 
 export default function Servicios() {
   const [categorias, setCategorias] = useState<Categoria[] | null>(null)
@@ -15,40 +18,57 @@ export default function Servicios() {
   }, [])
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-16">
-      <h1 className="font-display text-4xl font-bold tracking-tight">Servicios</h1>
-      <p className="mt-4 max-w-2xl text-lg text-tinta-700">
+    <Pagina>
+      <Typography variant="h1">Servicios</Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mt: 2, maxWidth: 640 }}>
         Categorías disponibles para solicitar asistencia técnica gestionada.
-      </p>
+      </Typography>
 
       {error && (
-        <p className="mt-8 rounded-md bg-red-50 px-4 py-3 text-red-700">{error}</p>
+        <Alert severity="error" sx={{ mt: 4 }}>
+          {error}
+        </Alert>
       )}
 
-      <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {categorias?.map((c) => (
-          <li key={c.id} className="rounded-lg border border-tinta-900/10 bg-white p-6">
-            <h2 className="font-display text-lg font-bold">{c.nombre}</h2>
-            {c.descripcion && (
-              <p className="mt-2 text-sm text-tinta-700">{c.descripcion}</p>
-            )}
-            {c.especialidad && (
-              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-violeta-500">
-                {c.especialidad}
-              </p>
-            )}
-          </li>
-        ))}
-      </ul>
+      {!categorias && !error && (
+        <Box sx={{ mt: 4 }}>
+          <Cargando texto="Cargando servicios…" />
+        </Box>
+      )}
 
-      <div className="mt-12">
-        <a
-          href="/solicitar"
-          className="inline-block rounded-md bg-violeta-500 px-6 py-3 font-display font-bold text-white transition-colors hover:bg-violeta-700"
-        >
+      {categorias && (
+        <Grid container spacing={3} sx={{ mt: 4 }}>
+          {categorias.map((c) => (
+            <Grid key={c.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+              <Card variant="outlined" sx={{ height: '100%' }}>
+                <CardContent>
+                  <Typography variant="h5">{c.nombre}</Typography>
+                  {c.descripcion && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      {c.descripcion}
+                    </Typography>
+                  )}
+                  {c.especialidad && (
+                    <Chip
+                      size="small"
+                      label={c.especialidad}
+                      variant="outlined"
+                      color="primary"
+                      sx={{ mt: 2 }}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      <Stack direction="row" sx={{ mt: 6 }}>
+        <Button component={Link} to="/solicitar" variant="contained" size="large">
           Solicitar asistencia
-        </a>
-      </div>
-    </section>
+        </Button>
+      </Stack>
+    </Pagina>
   )
 }

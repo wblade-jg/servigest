@@ -1,7 +1,30 @@
 import { useCallback, useEffect, useState } from 'react'
+import {
+  Box,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import { get, post, patch, del, ApiError } from '../../../lib/api'
 import type { Especialidad, Categoria, Listado } from '../../../lib/admin'
-import { Boton, Campo, Entrada, AreaTexto, Selector, Modal, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import {
+  Boton,
+  Campo,
+  Entrada,
+  AreaTexto,
+  Selector,
+  Modal,
+  Cargando,
+  ErrorPanel,
+  EstadoVacio,
+  Pagina,
+} from '../../../components/ui/primitivos'
 
 type Pestaña = 'especialidades' | 'categorias'
 
@@ -129,50 +152,53 @@ export default function Catalogos() {
   }
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Catálogos</h1>
+    <Pagina>
+      <Typography variant="h2">Catálogos</Typography>
 
-      <div className="mt-4 flex gap-2">
+      <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
         <Boton variante={pestana === 'especialidades' ? 'primario' : 'secundario'} onClick={() => setPestana('especialidades')}>
           Especialidades
         </Boton>
         <Boton variante={pestana === 'categorias' ? 'primario' : 'secundario'} onClick={() => setPestana('categorias')}>
           Categorías
         </Boton>
-      </div>
+      </Stack>
 
-      {error && <div className="mt-6"><ErrorPanel mensaje={error} /></div>}
-      {cargando && <div className="mt-6"><Cargando /></div>}
+      {error && <Box sx={{ mt: 3 }}><ErrorPanel mensaje={error} /></Box>}
+      {cargando && <Box sx={{ mt: 3 }}><Cargando /></Box>}
 
       {/* Especialidades */}
       {!cargando && pestana === 'especialidades' && (
         <>
-          <div className="mt-6 flex justify-end">
+          <Stack direction="row" sx={{ justifyContent: 'flex-end', mt: 3 }}>
             <Boton onClick={abrirCrearEsp}>Nueva especialidad</Boton>
-          </div>
+          </Stack>
           {especialidades.length === 0 ? (
-            <p className="mt-4 rounded-lg border border-tinta-900/10 bg-white p-6 text-tinta-500">No hay especialidades.</p>
+            <Box sx={{ mt: 2 }}><EstadoVacio>No hay especialidades.</EstadoVacio></Box>
           ) : (
-            <div className="mt-4 overflow-x-auto rounded-lg border border-tinta-900/10 bg-white">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-tinta-900/10 text-xs uppercase tracking-wide text-tinta-500">
-                  <tr><th className="px-4 py-3">Nombre</th><th className="px-4 py-3">Acciones</th></tr>
-                </thead>
-                <tbody>
+            <TableContainer component={Paper} variant="outlined" sx={{ mt: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nombre</TableCell>
+                    <TableCell>Acciones</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {especialidades.map((e) => (
-                    <tr key={e.id} className="border-b border-tinta-900/5 last:border-0 hover:bg-lavanda/60">
-                      <td className="px-4 py-3 font-display font-bold">{e.nombre}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <Boton variante="secundario" onClick={() => abrirEditarEsp(e)}>Editar</Boton>
-                          <Boton variante="peligro" onClick={() => void desactivarEsp(e.id)}>Desactivar</Boton>
-                        </div>
-                      </td>
-                    </tr>
+                    <TableRow key={e.id} hover>
+                      <TableCell sx={{ fontWeight: 700 }}>{e.nombre}</TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1}>
+                          <Boton variante="secundario" size="small" onClick={() => abrirEditarEsp(e)}>Editar</Boton>
+                          <Boton variante="peligro" size="small" onClick={() => void desactivarEsp(e.id)}>Desactivar</Boton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </>
       )}
@@ -180,59 +206,59 @@ export default function Catalogos() {
       {/* Categorías */}
       {!cargando && pestana === 'categorias' && (
         <>
-          <div className="mt-6 flex justify-end">
+          <Stack direction="row" sx={{ justifyContent: 'flex-end', mt: 3 }}>
             <Boton onClick={abrirCrearCat}>Nueva categoría</Boton>
-          </div>
+          </Stack>
           {categorias.length === 0 ? (
-            <p className="mt-4 rounded-lg border border-tinta-900/10 bg-white p-6 text-tinta-500">No hay categorías.</p>
+            <Box sx={{ mt: 2 }}><EstadoVacio>No hay categorías.</EstadoVacio></Box>
           ) : (
-            <div className="mt-4 overflow-x-auto rounded-lg border border-tinta-900/10 bg-white">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-tinta-900/10 text-xs uppercase tracking-wide text-tinta-500">
-                  <tr>
-                    <th className="px-4 py-3">Nombre</th>
-                    <th className="px-4 py-3">Descripción</th>
-                    <th className="px-4 py-3">Especialidad requerida</th>
-                    <th className="px-4 py-3">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <TableContainer component={Paper} variant="outlined" sx={{ mt: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nombre</TableCell>
+                    <TableCell>Descripción</TableCell>
+                    <TableCell>Especialidad requerida</TableCell>
+                    <TableCell>Acciones</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {categorias.map((c) => (
-                    <tr key={c.id} className="border-b border-tinta-900/5 last:border-0 hover:bg-lavanda/60">
-                      <td className="px-4 py-3 font-display font-bold">{c.nombre}</td>
-                      <td className="px-4 py-3">{c.descripcion ?? '—'}</td>
-                      <td className="px-4 py-3">{c.especialidadRequeridaNombre ?? '—'}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <Boton variante="secundario" onClick={() => abrirEditarCat(c)}>Editar</Boton>
-                          <Boton variante="peligro" onClick={() => void desactivarCat(c.id)}>Desactivar</Boton>
-                        </div>
-                      </td>
-                    </tr>
+                    <TableRow key={c.id} hover>
+                      <TableCell sx={{ fontWeight: 700 }}>{c.nombre}</TableCell>
+                      <TableCell>{c.descripcion ?? '—'}</TableCell>
+                      <TableCell>{c.especialidadRequeridaNombre ?? '—'}</TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1}>
+                          <Boton variante="secundario" size="small" onClick={() => abrirEditarCat(c)}>Editar</Boton>
+                          <Boton variante="peligro" size="small" onClick={() => void desactivarCat(c.id)}>Desactivar</Boton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </>
       )}
 
       {/* Modal: Especialidad */}
       <Modal titulo={editandoEsp ? 'Editar especialidad' : 'Nueva especialidad'} abierto={modalEsp} onCerrar={() => setModalEsp(false)}>
-        <div className="space-y-4">
+        <Stack spacing={2}>
           <Campo label="Nombre">
             <Entrada value={nombreEsp} onChange={(e) => setNombreEsp(e.target.value)} />
           </Campo>
-          <div className="flex justify-end gap-2 pt-2">
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', pt: 1 }}>
             <Boton variante="secundario" onClick={() => setModalEsp(false)}>Cancelar</Boton>
             <Boton onClick={() => void guardarEsp()}>Guardar</Boton>
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </Modal>
 
       {/* Modal: Categoría */}
       <Modal titulo={editandoCat ? 'Editar categoría' : 'Nueva categoría'} abierto={modalCat} onCerrar={() => setModalCat(false)}>
-        <div className="space-y-4">
+        <Stack spacing={2}>
           <Campo label="Nombre">
             <Entrada value={formCat.nombre} onChange={(e) => setFormCat({ ...formCat, nombre: e.target.value })} />
           </Campo>
@@ -248,12 +274,12 @@ export default function Catalogos() {
           <Campo label="Orden">
             <Entrada type="number" value={formCat.orden} onChange={(e) => setFormCat({ ...formCat, orden: e.target.value })} />
           </Campo>
-          <div className="flex justify-end gap-2 pt-2">
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', pt: 1 }}>
             <Boton variante="secundario" onClick={() => setModalCat(false)}>Cancelar</Boton>
             <Boton onClick={() => void guardarCat()}>Guardar</Boton>
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </Modal>
-    </section>
+    </Pagina>
   )
 }

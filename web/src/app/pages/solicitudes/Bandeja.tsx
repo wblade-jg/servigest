@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  Box,
+  Link as MuiLink,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import { get, ApiError } from '../../../lib/api'
 import { useSse } from '../../../lib/sse'
 import {
@@ -9,7 +22,17 @@ import {
   ETIQUETAS_PRIORIDAD,
   fechaLocal,
 } from '../../../lib/solicitudes'
-import { BadgeEstado, Boton, Entrada, Selector, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import {
+  BadgeEstado,
+  Boton,
+  Cargando,
+  Entrada,
+  ErrorPanel,
+  EstadoVacio,
+  Pagina,
+  Selector,
+  Tarjeta,
+} from '../../../components/ui/primitivos'
 
 const ESTADOS = [
   'RECIBIDA', 'EN_REVISION', 'REQUIERE_INFORMACION', 'APROBADA', 'RECHAZADA',
@@ -76,90 +99,101 @@ export default function Bandeja() {
   const totalPaginas = listado ? Math.max(1, Math.ceil(listado.total / LIMITE)) : 1
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Solicitudes</h1>
-      <p className="mt-1 text-sm text-tinta-500">
+    <Pagina>
+      <Typography variant="h2">Solicitudes</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
         {listado ? `${listado.total} solicitud${listado.total === 1 ? '' : 'es'}` : 'Consultando…'} · se actualiza en vivo
-      </p>
+      </Typography>
 
-      <div className="mt-6 grid gap-3 rounded-lg border border-tinta-900/10 bg-white p-4 sm:grid-cols-4">
-        <Entrada
-          type="search"
-          placeholder="Buscar por código, contacto…"
-          aria-label="Buscar"
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          className="sm:col-span-2"
-        />
-        <Selector aria-label="Estado" value={filtros.estado} onChange={(e) => actualizarFiltro('estado', e.target.value)}>
-          <option value="">Todos los estados</option>
-          {ESTADOS.map((e) => <option key={e} value={e}>{ETIQUETAS_ESTADO[e]}</option>)}
-        </Selector>
-        <Selector aria-label="Prioridad" value={filtros.prioridad} onChange={(e) => actualizarFiltro('prioridad', e.target.value)}>
-          <option value="">Toda prioridad</option>
-          {Object.entries(ETIQUETAS_PRIORIDAD).map(([clave, textoP]) => <option key={clave} value={clave}>{textoP}</option>)}
-        </Selector>
-        <Selector aria-label="Origen" value={filtros.origen} onChange={(e) => actualizarFiltro('origen', e.target.value)}>
-          <option value="">Ambos orígenes</option>
-          <option value="PUBLICO">Público</option>
-          <option value="CLIENTE">Cliente</option>
-        </Selector>
-      </div>
+      <Tarjeta sx={{ mt: 3 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '2fr 1fr 1fr 1fr' },
+            gap: 2,
+          }}
+        >
+          <Entrada
+            type="search"
+            placeholder="Buscar por código, contacto…"
+            aria-label="Buscar"
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+          />
+          <Selector aria-label="Estado" value={filtros.estado} onChange={(e) => actualizarFiltro('estado', e.target.value)}>
+            <option value="">Todos los estados</option>
+            {ESTADOS.map((e) => <option key={e} value={e}>{ETIQUETAS_ESTADO[e]}</option>)}
+          </Selector>
+          <Selector aria-label="Prioridad" value={filtros.prioridad} onChange={(e) => actualizarFiltro('prioridad', e.target.value)}>
+            <option value="">Toda prioridad</option>
+            {Object.entries(ETIQUETAS_PRIORIDAD).map(([clave, textoP]) => <option key={clave} value={clave}>{textoP}</option>)}
+          </Selector>
+          <Selector aria-label="Origen" value={filtros.origen} onChange={(e) => actualizarFiltro('origen', e.target.value)}>
+            <option value="">Ambos orígenes</option>
+            <option value="PUBLICO">Público</option>
+            <option value="CLIENTE">Cliente</option>
+          </Selector>
+        </Box>
+      </Tarjeta>
 
-      {error && <div className="mt-6"><ErrorPanel mensaje={error} /></div>}
-      {!error && (cargando || !listado) && <div className="mt-6"><Cargando /></div>}
+      {error && <Box sx={{ mt: 3 }}><ErrorPanel mensaje={error} /></Box>}
+      {!error && (cargando || !listado) && <Box sx={{ mt: 3 }}><Cargando /></Box>}
       {!error && listado && !cargando && listado.data.length === 0 && (
-        <p className="mt-6 rounded-lg border border-tinta-900/10 bg-white p-6 text-tinta-500">
-          No hay solicitudes con esos filtros.
-        </p>
+        <Box sx={{ mt: 3 }}>
+          <EstadoVacio>No hay solicitudes con esos filtros.</EstadoVacio>
+        </Box>
       )}
 
       {!error && listado && listado.data.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-tinta-900/10 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-tinta-900/10 text-xs uppercase tracking-wide text-tinta-500">
-              <tr>
-                <th className="px-4 py-3">Código</th>
-                <th className="px-4 py-3">Origen</th>
-                <th className="px-4 py-3">Categoría</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3">Prioridad</th>
-                <th className="px-4 py-3">Fecha</th>
-                <th className="px-4 py-3">Técnico</th>
-              </tr>
-            </thead>
-            <tbody>
-              {listado.data.map((s: Solicitud) => (
-                <tr key={s.id} className="border-b border-tinta-900/5 last:border-0 hover:bg-lavanda/60">
-                  <td className="px-4 py-3 font-display font-bold">
-                    <Link to={`/app/solicitudes/${s.id}`} className="text-violeta-500 hover:underline">
-                      {s.codigo}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">{s.origen === 'PUBLICO' ? 'Público' : 'Cliente'}</td>
-                  <td className="px-4 py-3">{s.categoriaNombre ?? '—'}</td>
-                  <td className="px-4 py-3"><BadgeEstado estado={s.estado} texto={ETIQUETAS_ESTADO[s.estado] ?? s.estado} /></td>
-                  <td className="px-4 py-3">{s.prioridad ? ETIQUETAS_PRIORIDAD[s.prioridad] : '—'}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">{fechaLocal(s.fechaCreacion)}</td>
-                  <td className="px-4 py-3">{s.tecnicoNombre ?? 'Sin asignar'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        <>
+          <TableContainer component={Paper} variant="outlined" sx={{ mt: 3 }}>
+            <Table sx={{ minWidth: 760 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Código</TableCell>
+                  <TableCell>Origen</TableCell>
+                  <TableCell>Categoría</TableCell>
+                  <TableCell>Estado</TableCell>
+                  <TableCell>Prioridad</TableCell>
+                  <TableCell>Fecha</TableCell>
+                  <TableCell>Técnico</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {listado.data.map((s: Solicitud) => (
+                  <TableRow key={s.id} hover>
+                    <TableCell>
+                      <MuiLink component={Link} to={`/app/solicitudes/${s.id}`} sx={{ fontWeight: 700 }}>
+                        {s.codigo}
+                      </MuiLink>
+                    </TableCell>
+                    <TableCell>{s.origen === 'PUBLICO' ? 'Público' : 'Cliente'}</TableCell>
+                    <TableCell>{s.categoriaNombre ?? '—'}</TableCell>
+                    <TableCell><BadgeEstado estado={s.estado} texto={ETIQUETAS_ESTADO[s.estado] ?? s.estado} /></TableCell>
+                    <TableCell>{s.prioridad ? ETIQUETAS_PRIORIDAD[s.prioridad] : '—'}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{fechaLocal(s.fechaCreacion)}</TableCell>
+                    <TableCell>{s.tecnicoNombre ?? 'Sin asignar'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-      {listado && totalPaginas > 1 && (
-        <div className="mt-4 flex items-center justify-end gap-3 text-sm">
-          <Boton variante="secundario" disabled={page <= 1 || cargando} onClick={() => setPage((p) => p - 1)}>
-            Anterior
-          </Boton>
-          <span className="text-tinta-500">Página {page} de {totalPaginas}</span>
-          <Boton variante="secundario" disabled={page >= totalPaginas || cargando} onClick={() => setPage((p) => p + 1)}>
-            Siguiente
-          </Boton>
-        </div>
+          {totalPaginas > 1 && (
+            <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'flex-end', mt: 2 }}>
+              <Boton variante="secundario" size="small" disabled={page <= 1 || cargando} onClick={() => setPage((p) => p - 1)}>
+                Anterior
+              </Boton>
+              <Typography variant="body2" color="text.secondary">
+                Página {page} de {totalPaginas}
+              </Typography>
+              <Boton variante="secundario" size="small" disabled={page >= totalPaginas || cargando} onClick={() => setPage((p) => p + 1)}>
+                Siguiente
+              </Boton>
+            </Stack>
+          )}
+        </>
       )}
-    </section>
+    </Pagina>
   )
 }

@@ -1,27 +1,52 @@
+import { Link } from 'react-router-dom'
+import { Card, CardContent, Stack, Typography } from '@mui/material'
+import { Pagina } from '../../components/ui/primitivos'
+
 export default function Contacto() {
   return (
-    <section className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="font-display text-4xl font-bold tracking-tight">Contacto</h1>
-      <p className="mt-4 text-lg text-tinta-700">
+    <Pagina maxWidth="md">
+      <Typography variant="h1">Contacto</Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
         Canales oficiales de ServiGest Ecuador.
-      </p>
-      <dl className="mt-10 space-y-6 text-sm">
-        <div className="rounded-lg border border-tinta-900/10 bg-white p-6">
-          <dt className="font-display font-bold">Ciudades</dt>
-          <dd className="mt-2 text-tinta-700">Quito · Guayaquil</dd>
-        </div>
-        <div className="rounded-lg border border-tinta-900/10 bg-white p-6">
-          <dt className="font-display font-bold">Horario de atención</dt>
-          <dd className="mt-2 text-tinta-700">Lunes a viernes, 08:00–17:00 (America/Guayaquil)</dd>
-        </div>
-        <div className="rounded-lg border border-tinta-900/10 bg-white p-6">
-          <dt className="font-display font-bold">Requerimientos técnicos</dt>
-          <dd className="mt-2 text-tinta-700">
-            Usa el formulario de <a href="/solicitar" className="text-violeta-500 underline">solicitud de asistencia</a>.
-            Recibirás un código y un enlace de seguimiento inmediato.
-          </dd>
-        </div>
-      </dl>
-    </section>
+      </Typography>
+
+      <Stack spacing={2.5} sx={{ mt: 5 }}>
+        <Card variant="outlined">
+          <CardContent>
+            <Typography variant="h6">Ciudades</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Quito · Guayaquil
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined">
+          <CardContent>
+            <Typography variant="h6">Horario de atención</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Lunes a viernes, 08:00–17:00 (America/Guayaquil)
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined">
+          <CardContent>
+            <Typography variant="h6">Requerimientos técnicos</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Usa el formulario de{' '}
+              <Typography
+                component={Link}
+                to="/solicitar"
+                variant="body2"
+                sx={{ color: 'primary.main', fontWeight: 600, textDecoration: 'underline' }}
+              >
+                solicitud de asistencia
+              </Typography>
+              . Recibirás un código y un enlace de seguimiento inmediato.
+            </Typography>
+          </CardContent>
+        </Card>
+      </Stack>
+    </Pagina>
   )
 }

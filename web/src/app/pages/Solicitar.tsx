@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Alert, Box, Button, Card, CardContent, Stack, Typography } from '@mui/material'
+import CheckOutlined from '@mui/icons-material/CheckOutlined'
+import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined'
 import { get, postMultipart, ApiError } from '../../lib/api'
 import type { Categoria, CreacionSolicitud } from '../../lib/solicitudes'
+import { AreaTexto, Boton, Campo, Entrada, Pagina, Selector } from '../../components/ui/primitivos'
 
 const MAX_ADJUNTOS = 5
 const TAMANO_MAX = 5 * 1024 * 1024
@@ -44,14 +48,17 @@ export default function Solicitar() {
     setError(null)
     const formulario = evento.currentTarget
     const datos = new FormData(formulario)
-    const campos = Object.fromEntries(datos.entries()) as Record<string, string>
-    const archivos = validarArchivos(formulario.adjuntos.files)
+    const campos = Object.fromEntries(
+      Array.from(datos.entries()).filter(([clave]) => clave !== 'adjuntos'),
+    ) as Record<string, string>
+    const entradaAdjuntos = formulario.elements.namedItem('adjuntos') as HTMLInputElement | null
+    const archivos = validarArchivos(entradaAdjuntos?.files ?? null)
     if (archivos === null) return
 
     setEnviando(true)
     try {
-      const resultado = await postMultipart<CreacionSolicitud>('/public/solicitudes', campos, archivos)
-      setResultado(resultado)
+      const creada = await postMultipart<CreacionSolicitud>('/public/solicitudes', campos, archivos)
+      setResultado(creada)
       window.scrollTo(0, 0)
     } catch (e: unknown) {
       if (e instanceof ApiError) {
@@ -66,132 +73,123 @@ export default function Solicitar() {
 
   if (resultado) {
     return (
-      <section className="mx-auto max-w-2xl px-6 py-16">
-        <div className="rounded-lg border border-green-200 bg-green-50 p-8">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-green-800">
-            Solicitud recibida
-          </h1>
-          <p className="mt-4 text-tinta-700">
-            Tu solicitud quedó registrada con el código{' '}
-            <strong className="font-display text-tinta-950">{resultado.codigo}</strong> (referencia para llamadas y correos).
-          </p>
+      <Pagina maxWidth="sm">
+        <Card variant="outlined">
+          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+            <Alert severity="success" sx={{ mb: 3 }}>
+              La solicitud quedó registrada correctamente.
+            </Alert>
+            <Typography variant="h2">Solicitud recibida</Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+              Tu solicitud quedó registrada con el código{' '}
+              <Typography component="span" sx={{ fontFamily: '"Archivo Variable", sans-serif', fontWeight: 700, color: 'text.primary' }}>
+                {resultado.codigo}
+              </Typography>{' '}
+              (referencia para llamadas y correos).
+            </Typography>
 
-          <div className="mt-6 rounded-md border border-green-300 bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-tinta-500">
-              Token de seguimiento en línea
-            </p>
-            <p className="mt-1 break-all font-mono text-sm font-bold text-tinta-900 select-all">
-              {resultado.token}
-            </p>
-            <p className="mt-2 text-xs text-tinta-500">
-              Guarda este token para consultar el avance en la barra de búsqueda de la página principal.
-            </p>
-          </div>
+            <Box sx={{ mt: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'background.default' }}>
+              <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontWeight: 600 }}>
+                Token de seguimiento en línea
+              </Typography>
+              <Typography
+                sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: 14, fontWeight: 700, wordBreak: 'break-all', userSelect: 'all' }}
+              >
+                {resultado.token}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Guarda este token para consultar el avance en la barra de búsqueda de la página principal.
+              </Typography>
+            </Box>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link
-              to={`/seguimiento/${resultado.token}`}
-              className="rounded-md bg-violeta-500 px-6 py-3 font-display font-bold text-white transition-colors hover:bg-violeta-700"
-            >
-              Ver seguimiento
-            </Link>
-            <button
-              type="button"
-              onClick={() => {
-                void navigator.clipboard?.writeText(resultado.token)
-                setCopiado(true)
-                setTimeout(() => setCopiado(false), 2000)
-              }}
-              className="rounded-md border border-tinta-900/20 bg-white px-4 py-3 font-display text-sm font-bold text-tinta-800 transition-colors hover:bg-tinta-50"
-            >
-              {copiado ? '✓ Token copiado' : 'Copiar token'}
-            </button>
-          </div>
-        </div>
-      </section>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 3 }}>
+              <Button component={Link} to={`/seguimiento/${resultado.token}`} variant="contained">
+                Ver seguimiento
+              </Button>
+              <Boton
+                variante="secundario"
+                startIcon={copiado ? <CheckOutlined /> : <ContentCopyOutlined />}
+                onClick={() => {
+                  void navigator.clipboard?.writeText(resultado.token)
+                  setCopiado(true)
+                  setTimeout(() => setCopiado(false), 2000)
+                }}
+              >
+                {copiado ? 'Token copiado' : 'Copiar token'}
+              </Boton>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Pagina>
     )
   }
 
   return (
-    <section className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-display text-4xl font-bold tracking-tight">Solicitar asistencia</h1>
-      <p className="mt-4 text-lg text-tinta-700">
+    <Pagina maxWidth="sm">
+      <Typography variant="h1">Solicitar asistencia</Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
         Describe tu requerimiento. Recibirás un código de seguimiento al enviar el formulario.
-      </p>
+      </Typography>
 
-      {error && (
-        <p className="mt-6 rounded-md bg-red-50 px-4 py-3 text-red-700" role="alert">
-          {error}
-        </p>
-      )}
+      <Stack component="form" onSubmit={enviar} spacing={3} noValidate sx={{ mt: 4 }}>
+        {error && <Alert severity="error">{error}</Alert>}
 
-      <form onSubmit={enviar} className="mt-10 space-y-6" noValidate>
-        <div>
-          <label htmlFor="organizacion" className="block text-sm font-semibold">Organización</label>
-          <input id="organizacion" name="organizacion" required className="mt-1 w-full rounded-md border border-tinta-900/20 bg-white px-3 py-2" />
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor="contactoNombre" className="block text-sm font-semibold">Nombre de contacto</label>
-            <input id="contactoNombre" name="contactoNombre" required className="mt-1 w-full rounded-md border border-tinta-900/20 bg-white px-3 py-2" />
-          </div>
-          <div>
-            <label htmlFor="contactoTelefono" className="block text-sm font-semibold">Teléfono</label>
-            <input id="contactoTelefono" name="contactoTelefono" required className="mt-1 w-full rounded-md border border-tinta-900/20 bg-white px-3 py-2" />
-          </div>
-        </div>
-        <div>
-          <label htmlFor="contactoEmail" className="block text-sm font-semibold">Correo electrónico</label>
-          <input id="contactoEmail" name="contactoEmail" type="email" required className="mt-1 w-full rounded-md border border-tinta-900/20 bg-white px-3 py-2" />
-        </div>
-        <div>
-          <label htmlFor="categoriaId" className="block text-sm font-semibold">Categoría</label>
-          <select id="categoriaId" name="categoriaId" required className="mt-1 w-full rounded-md border border-tinta-900/20 bg-white px-3 py-2">
+        <Campo label="Organización">
+          <Entrada name="organizacion" required />
+        </Campo>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <Campo label="Nombre de contacto">
+            <Entrada name="contactoNombre" required />
+          </Campo>
+          <Campo label="Teléfono">
+            <Entrada name="contactoTelefono" required />
+          </Campo>
+        </Box>
+
+        <Campo label="Correo electrónico">
+          <Entrada name="contactoEmail" type="email" required />
+        </Campo>
+
+        <Campo label="Categoría">
+          <Selector name="categoriaId" required defaultValue="">
             <option value="">Selecciona una categoría…</option>
             {categorias.map((c) => (
-              <option key={c.id} value={c.id}>{c.nombre}</option>
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
             ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="descripcion" className="block text-sm font-semibold">
-            Descripción <span className="font-normal text-tinta-500">(entre 20 y 2000 caracteres)</span>
-          </label>
-          <textarea id="descripcion" name="descripcion" rows={5} required minLength={20} maxLength={2000} className="mt-1 w-full rounded-md border border-tinta-900/20 bg-white px-3 py-2" />
-        </div>
-        <div>
-          <label htmlFor="ubicacion" className="block text-sm font-semibold">
-            Ubicación <span className="font-normal text-tinta-500">(opcional)</span>
-          </label>
-          <input id="ubicacion" name="ubicacion" className="mt-1 w-full rounded-md border border-tinta-900/20 bg-white px-3 py-2" />
-        </div>
-        <div>
-          <label htmlFor="urgenciaDeclarada" className="block text-sm font-semibold">
-            Urgencia <span className="font-normal text-tinta-500">(solo como referencia; la prioridad la define coordinación)</span>
-          </label>
-          <select id="urgenciaDeclarada" name="urgenciaDeclarada" className="mt-1 w-full rounded-md border border-tinta-900/20 bg-white px-3 py-2">
+          </Selector>
+        </Campo>
+
+        <Campo label="Descripción" ayuda="Entre 20 y 2000 caracteres.">
+          <AreaTexto name="descripcion" rows={5} required minLength={20} maxLength={2000} />
+        </Campo>
+
+        <Campo label="Ubicación" ayuda="Opcional.">
+          <Entrada name="ubicacion" />
+        </Campo>
+
+        <Campo label="Urgencia" ayuda="Solo como referencia; la prioridad la define coordinación.">
+          <Selector name="urgenciaDeclarada" defaultValue="">
             <option value="">Sin preferencia</option>
             <option value="BAJA">Baja</option>
             <option value="MEDIA">Media</option>
             <option value="ALTA">Alta</option>
             <option value="CRITICA">Crítica</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="adjuntos" className="block text-sm font-semibold">
-            Adjuntos <span className="font-normal text-tinta-500">(hasta 5 archivos de 5 MB; jpg, png o pdf)</span>
-          </label>
-          <input id="adjuntos" name="adjuntos" type="file" multiple accept=".jpg,.jpeg,.png,.pdf" className="mt-1 w-full text-sm" />
-        </div>
+          </Selector>
+        </Campo>
 
-        <button
-          type="submit"
-          disabled={enviando}
-          className="rounded-md bg-violeta-500 px-6 py-3 font-display font-bold text-white transition-colors hover:bg-violeta-700 disabled:opacity-50"
-        >
-          {enviando ? 'Enviando…' : 'Enviar solicitud'}
-        </button>
-      </form>
-    </section>
+        <Campo label="Adjuntos" ayuda="Hasta 5 archivos de 5 MB; jpg, png o pdf.">
+          <Entrada name="adjuntos" type="file" multiple accept=".jpg,.jpeg,.png,.pdf" />
+        </Campo>
+
+        <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
+          <Boton type="submit" disabled={enviando}>
+            {enviando ? 'Enviando…' : 'Enviar solicitud'}
+          </Boton>
+        </Stack>
+      </Stack>
+    </Pagina>
   )
 }

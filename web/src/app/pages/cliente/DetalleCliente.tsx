@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Alert, Box, Link as MuiLink, Stack, Typography } from '@mui/material'
+import ArrowBackOutlined from '@mui/icons-material/ArrowBackOutlined'
 import { get, patch, ApiError } from '../../../lib/api'
 import {
   type Solicitud,
@@ -7,7 +9,19 @@ import {
   ETIQUETAS_PRIORIDAD,
   fechaLocal,
 } from '../../../lib/solicitudes'
-import { BadgeEstado, Boton, AreaTexto, Campo, Modal, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import {
+  BadgeEstado,
+  Boton,
+  AreaTexto,
+  Campo,
+  Dato,
+  Modal,
+  Cargando,
+  ErrorPanel,
+  Pagina,
+  Tarjeta,
+} from '../../../components/ui/primitivos'
+import { RielEstado } from '../../../components/ui/RielEstado'
 
 // Detalle de una solicitud para el Cliente: sin notas internas, auditoría ni
 // intervenciones. El backend responde 404 si la solicitud es de otra organización.
@@ -50,35 +64,53 @@ export default function DetalleCliente () {
 
   if (error) {
     return (
-      <section className="mx-auto max-w-3xl px-6 py-16">
+      <Pagina maxWidth="md">
         <ErrorPanel mensaje={error} />
-        <Link to="/app/mis-solicitudes" className="mt-6 inline-block text-violeta-500 underline">Volver a mis solicitudes</Link>
-      </section>
+        <MuiLink component={Link} to="/app/mis-solicitudes" sx={{ display: 'inline-block', mt: 3 }}>
+          Volver a mis solicitudes
+        </MuiLink>
+      </Pagina>
     )
   }
   if (!solicitud) {
-    return <section className="mx-auto max-w-3xl px-6 py-16"><Cargando texto="Cargando solicitud…" /></section>
+    return (
+      <Pagina maxWidth="md">
+        <Cargando texto="Cargando solicitud…" />
+      </Pagina>
+    )
   }
 
   const cancelable = ESTADOS_CANCELABLES_CLIENTE.includes(solicitud.estado)
 
   return (
-    <section className="mx-auto max-w-3xl px-6 py-10">
-      <Link to="/app/mis-solicitudes" className="text-sm text-violeta-500 hover:underline">← Mis solicitudes</Link>
-      <div className="mt-3 flex flex-wrap items-center gap-4">
-        <h1 className="font-display text-3xl font-bold tracking-tight">{solicitud.codigo}</h1>
+    <Pagina maxWidth="md">
+      <MuiLink
+        component={Link}
+        to="/app/mis-solicitudes"
+        variant="body2"
+        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+      >
+        <ArrowBackOutlined sx={{ fontSize: 16 }} /> Mis solicitudes
+      </MuiLink>
+
+      <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 2, mt: 1.5 }}>
+        <Typography variant="h2">{solicitud.codigo}</Typography>
         <BadgeEstado estado={solicitud.estado} texto={ETIQUETAS_ESTADO[solicitud.estado] ?? solicitud.estado} />
         {solicitud.prioridad && (
-          <span className="text-sm text-tinta-500">Prioridad {ETIQUETAS_PRIORIDAD[solicitud.prioridad] ?? solicitud.prioridad}</span>
+          <Typography variant="body2" color="text.secondary">
+            Prioridad {ETIQUETAS_PRIORIDAD[solicitud.prioridad] ?? solicitud.prioridad}
+          </Typography>
         )}
-      </div>
+      </Stack>
 
-      {mensaje && (
-        <p className="mt-4 rounded-md bg-emerald-100 px-4 py-2 text-sm text-emerald-800">{mensaje}</p>
-      )}
+      {mensaje && <Alert severity="info" onClose={() => setMensaje(null)} sx={{ mt: 2 }}>{mensaje}</Alert>}
 
-      <div className="mt-6 rounded-lg border border-tinta-900/10 bg-white p-6">
-        <dl className="grid gap-4 text-sm sm:grid-cols-2">
+      <Box sx={{ mt: 3 }}>
+        <RielEstado estado={solicitud.estado} />
+      </Box>
+
+      <Tarjeta titulo="Datos de la solicitud" sx={{ mt: 3 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
           <Dato titulo="Categoría" valor={solicitud.categoriaNombre ?? '—'} />
           <Dato titulo="Organización" valor={solicitud.organizacionNombre ?? '—'} />
           <Dato titulo="Contacto" valor={`${solicitud.contactoNombre} · ${solicitud.contactoEmail} · ${solicitud.contactoTelefono}`} />
@@ -87,54 +119,48 @@ export default function DetalleCliente () {
           <Dato titulo="Fecha objetivo (SLA)" valor={fechaLocal(solicitud.fechaObjetivo)} />
           <Dato titulo="Fecha programada" valor={fechaLocal(solicitud.fechaProgramada)} />
           <Dato titulo="Técnico asignado" valor={solicitud.tecnicoNombre ?? 'Sin asignar'} />
-        </dl>
-        <p className="mt-4 whitespace-pre-wrap rounded-md bg-lavanda p-3 text-sm">{solicitud.descripcion}</p>
+        </Box>
+
+        <Box sx={{ mt: 2, p: 1.5, bgcolor: 'background.default', borderRadius: 1 }}>
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{solicitud.descripcion}</Typography>
+        </Box>
+
         {solicitud.rechazadaMotivo && (
-          <p className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-800">Motivo del rechazo: {solicitud.rechazadaMotivo}</p>
+          <Alert severity="error" sx={{ mt: 2 }}>Motivo del rechazo: {solicitud.rechazadaMotivo}</Alert>
         )}
         {solicitud.canceladaMotivo && (
-          <p className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-800">Motivo de la cancelación: {solicitud.canceladaMotivo}</p>
+          <Alert severity="error" sx={{ mt: 2 }}>Motivo de la cancelación: {solicitud.canceladaMotivo}</Alert>
         )}
         {solicitud.resolucion && (
-          <p className="mt-3 rounded-md bg-teal-50 p-3 text-sm text-teal-800">Resolución: {solicitud.resolucion}</p>
+          <Alert severity="success" sx={{ mt: 2 }}>Resolución: {solicitud.resolucion}</Alert>
         )}
-      </div>
+      </Tarjeta>
 
       {cancelable && (
-        <div className="mt-6">
+        <Box sx={{ mt: 3 }}>
           <Boton variante="peligro" onClick={() => setCancelando(true)}>Cancelar solicitud</Boton>
-          <p className="mt-2 text-xs text-tinta-500">
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
             Solo puede cancelarse antes de la aprobación. Después de aprobada, contacta a coordinación.
-          </p>
-        </div>
+          </Typography>
+        </Box>
       )}
 
       {cancelando && (
         <Modal titulo="Cancelar solicitud" abierto onCerrar={() => setCancelando(false)}>
-          <form className="space-y-4" onSubmit={cancelar}>
-            <p className="text-sm text-tinta-700">
+          <Stack component="form" onSubmit={cancelar} spacing={2}>
+            <Typography variant="body2" color="text.secondary">
               La cancelación es definitiva y requiere un motivo.
-            </p>
+            </Typography>
             <Campo label="Motivo">
               <AreaTexto required value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Explica por qué cancelas la solicitud…" />
             </Campo>
-            <div className="flex justify-end gap-2">
+            <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
               <Boton type="button" variante="secundario" onClick={() => setCancelando(false)}>Volver</Boton>
               <Boton type="submit" variante="peligro">Confirmar cancelación</Boton>
-            </div>
-          </form>
+            </Stack>
+          </Stack>
         </Modal>
       )}
-
-    </section>
-  )
-}
-
-function Dato ({ titulo, valor }: { titulo: string; valor: string }) {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-tinta-500">{titulo}</dt>
-      <dd className="mt-0.5">{valor}</dd>
-    </div>
+    </Pagina>
   )
 }

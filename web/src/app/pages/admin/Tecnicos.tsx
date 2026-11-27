@@ -1,8 +1,35 @@
 import { useCallback, useEffect, useState } from 'react'
+import {
+  Alert,
+  Box,
+  Checkbox,
+  Divider,
+  FormControlLabel,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import { get, post, put, del, ApiError } from '../../../lib/api'
 import type { Tecnico, Especialidad, DisponibilidadFranja } from '../../../lib/admin'
 import { DIAS_SEMANA } from '../../../lib/admin'
-import { Boton, Campo, Entrada, AreaTexto, Selector, Modal, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import {
+  Boton,
+  Campo,
+  Entrada,
+  AreaTexto,
+  Selector,
+  Modal,
+  Cargando,
+  ErrorPanel,
+  EstadoVacio,
+  Pagina,
+} from '../../../components/ui/primitivos'
 
 export default function Tecnicos() {
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([])
@@ -124,128 +151,153 @@ export default function Tecnicos() {
   }
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Técnicos</h1>
-          <p className="mt-1 text-sm text-tinta-500">{tecnicos.length} técnicos activos</p>
-        </div>
+    <Pagina>
+      <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+        <Box>
+          <Typography variant="h2">Técnicos</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {tecnicos.length} técnicos activos
+          </Typography>
+        </Box>
         <Boton onClick={() => setModalHabilitar(true)}>Habilitar técnico</Boton>
-      </div>
+      </Stack>
 
-      {error && <div className="mt-6"><ErrorPanel mensaje={error} /></div>}
-      {!error && cargando && <div className="mt-6"><Cargando /></div>}
+      {error && <Box sx={{ mt: 3 }}><ErrorPanel mensaje={error} /></Box>}
+      {!error && cargando && <Box sx={{ mt: 3 }}><Cargando /></Box>}
       {!error && !cargando && tecnicos.length === 0 && (
-        <p className="mt-6 rounded-lg border border-tinta-900/10 bg-white p-6 text-tinta-500">No hay técnicos habilitados.</p>
+        <Box sx={{ mt: 3 }}><EstadoVacio>No hay técnicos habilitados.</EstadoVacio></Box>
       )}
 
       {!error && !cargando && tecnicos.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-tinta-900/10 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-tinta-900/10 text-xs uppercase tracking-wide text-tinta-500">
-              <tr>
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Especialidades</th>
-                <th className="px-4 py-3">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableContainer component={Paper} variant="outlined" sx={{ mt: 3 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Nombre</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Especialidades</TableCell>
+                <TableCell>Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {tecnicos.map((t) => (
-                <tr key={t.id} className="border-b border-tinta-900/5 last:border-0 hover:bg-lavanda/60">
-                  <td className="px-4 py-3 font-display font-bold">{t.nombre}</td>
-                  <td className="px-4 py-3">{t.email}</td>
-                  <td className="px-4 py-3">{t.especialidades?.join(', ') || '—'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <Boton variante="secundario" onClick={() => abrirEspecialidades(t)}>Especialidades</Boton>
-                      <Boton variante="secundario" onClick={() => abrirDisponibilidad(t)}>Disponibilidad</Boton>
-                      <Boton variante="peligro" onClick={() => void desactivarTecnico(t.id)}>Desactivar</Boton>
-                    </div>
-                  </td>
-                </tr>
+                <TableRow key={t.id} hover>
+                  <TableCell sx={{ fontWeight: 700 }}>{t.nombre}</TableCell>
+                  <TableCell>{t.email}</TableCell>
+                  <TableCell>{t.especialidades?.join(', ') || '—'}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      <Boton variante="secundario" size="small" onClick={() => abrirEspecialidades(t)}>Especialidades</Boton>
+                      <Boton variante="secundario" size="small" onClick={() => abrirDisponibilidad(t)}>Disponibilidad</Boton>
+                      <Boton variante="peligro" size="small" onClick={() => void desactivarTecnico(t.id)}>Desactivar</Boton>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
 
       {/* Modal: Habilitar técnico */}
       <Modal titulo="Habilitar técnico" abierto={modalHabilitar} onCerrar={() => setModalHabilitar(false)}>
-        <div className="space-y-4">
+        <Stack spacing={2}>
           <Campo label="ID del usuario" ayuda="El usuario debe tener rol TECNICO">
             <Entrada value={formHabilitar.usuarioId} onChange={(e) => setFormHabilitar({ ...formHabilitar, usuarioId: e.target.value })} />
           </Campo>
           <Campo label="Notas">
             <AreaTexto value={formHabilitar.notas} onChange={(e) => setFormHabilitar({ ...formHabilitar, notas: e.target.value })} />
           </Campo>
-          <div className="flex justify-end gap-2 pt-2">
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', pt: 1 }}>
             <Boton variante="secundario" onClick={() => setModalHabilitar(false)}>Cancelar</Boton>
             <Boton onClick={() => void habilitar()}>Habilitar</Boton>
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </Modal>
 
       {/* Modal: Especialidades */}
       <Modal titulo={`Especialidades — ${tecnicoSeleccionado?.nombre ?? ''}`} abierto={modalEsp} onCerrar={() => setModalEsp(false)}>
-        <div className="space-y-3">
+        <Stack spacing={1}>
           {especialidades.map((e) => (
-            <label key={e.id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={espSeleccionadas.includes(e.id)}
-                onChange={(ev) => {
-                  if (ev.target.checked) setEspSeleccionadas([...espSeleccionadas, e.id])
-                  else setEspSeleccionadas(espSeleccionadas.filter(id => id !== e.id))
-                }}
-              />
-              {e.nombre}
-            </label>
+            <FormControlLabel
+              key={e.id}
+              label={e.nombre}
+              control={
+                <Checkbox
+                  size="small"
+                  checked={espSeleccionadas.includes(e.id)}
+                  onChange={(ev) => {
+                    if (ev.target.checked) setEspSeleccionadas([...espSeleccionadas, e.id])
+                    else setEspSeleccionadas(espSeleccionadas.filter(id => id !== e.id))
+                  }}
+                />
+              }
+            />
           ))}
-          {especialidades.length === 0 && <p className="text-sm text-tinta-500">No hay especialidades registradas.</p>}
-          <div className="flex justify-end gap-2 pt-2">
+          {especialidades.length === 0 && (
+            <Typography variant="body2" color="text.secondary">No hay especialidades registradas.</Typography>
+          )}
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', pt: 1 }}>
             <Boton variante="secundario" onClick={() => setModalEsp(false)}>Cancelar</Boton>
             <Boton onClick={() => void guardarEspecialidades()}>Guardar</Boton>
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </Modal>
 
       {/* Modal: Disponibilidad */}
       <Modal titulo={`Disponibilidad — ${tecnicoSeleccionado?.nombre ?? ''}`} abierto={modalDisp} onCerrar={() => setModalDisp(false)}>
-        <div className="space-y-4">
-          {errorDisp && <p className="text-sm text-red-600">{errorDisp}</p>}
+        <Stack spacing={2}>
+          {errorDisp && <Alert severity="error">{errorDisp}</Alert>}
           {disponibilidad.length > 0 && (
-            <div className="space-y-1">
+            <Stack spacing={1}>
               {disponibilidad.map((f) => (
-                <div key={f.id} className="flex items-center justify-between rounded-md border border-tinta-900/10 px-3 py-2 text-sm">
-                  <span>{DIAS_SEMANA[f.diaSemana]}: {f.horaInicio.slice(0, 5)} — {f.horaFin.slice(0, 5)}</span>
-                  <Boton variante="peligro" onClick={() => void eliminarFranja(f.id)}>Eliminar</Boton>
-                </div>
+                <Stack
+                  key={f.id}
+                  direction="row"
+                  spacing={2}
+                  sx={{
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    px: 1.5,
+                    py: 1,
+                  }}
+                >
+                  <Typography variant="body2">
+                    {DIAS_SEMANA[f.diaSemana]}: {f.horaInicio.slice(0, 5)} — {f.horaFin.slice(0, 5)}
+                  </Typography>
+                  <Boton variante="peligro" size="small" onClick={() => void eliminarFranja(f.id)}>Eliminar</Boton>
+                </Stack>
               ))}
-            </div>
+            </Stack>
           )}
-          <div className="border-t border-tinta-900/10 pt-3">
-            <p className="mb-2 text-sm font-display font-bold">Agregar franja</p>
-            <div className="grid grid-cols-3 gap-2">
-              <Campo label="Día">
-                <Selector value={formDisp.diaSemana} onChange={(e) => setFormDisp({ ...formDisp, diaSemana: e.target.value })}>
-                  {Object.entries(DIAS_SEMANA).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </Selector>
-              </Campo>
-              <Campo label="Inicio">
-                <Entrada type="time" value={formDisp.horaInicio} onChange={(e) => setFormDisp({ ...formDisp, horaInicio: e.target.value })} />
-              </Campo>
-              <Campo label="Fin">
-                <Entrada type="time" value={formDisp.horaFin} onChange={(e) => setFormDisp({ ...formDisp, horaFin: e.target.value })} />
-              </Campo>
-            </div>
-            <Boton className="mt-3" onClick={() => void agregarFranja()}>Agregar</Boton>
-          </div>
-          <div className="flex justify-end pt-2">
+
+          <Divider />
+          <Typography variant="h6">Agregar franja</Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
+            <Campo label="Día">
+              <Selector value={formDisp.diaSemana} onChange={(e) => setFormDisp({ ...formDisp, diaSemana: e.target.value })}>
+                {Object.entries(DIAS_SEMANA).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </Selector>
+            </Campo>
+            <Campo label="Inicio">
+              <Entrada type="time" value={formDisp.horaInicio} onChange={(e) => setFormDisp({ ...formDisp, horaInicio: e.target.value })} />
+            </Campo>
+            <Campo label="Fin">
+              <Entrada type="time" value={formDisp.horaFin} onChange={(e) => setFormDisp({ ...formDisp, horaFin: e.target.value })} />
+            </Campo>
+          </Box>
+          <Box>
+            <Boton onClick={() => void agregarFranja()}>Agregar</Boton>
+          </Box>
+
+          <Stack direction="row" sx={{ justifyContent: 'flex-end', pt: 1 }}>
             <Boton variante="secundario" onClick={() => setModalDisp(false)}>Cerrar</Boton>
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </Modal>
-    </section>
+    </Pagina>
   )
 }

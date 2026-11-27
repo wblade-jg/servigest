@@ -27,7 +27,7 @@ No cargues documentos adicionales de forma anticipada. Si una tarea exige una re
 | Datos | PostgreSQL con `pg`, SQL puro, **sin ORM** |
 | Migraciones | `.sql` numerados + runner propio con `schema_migrations` |
 | Frontend | React + Vite + TypeScript estricto |
-| UI | Tailwind CSS + shadcn/ui |
+| UI | Material UI (MUI) 9 + Emotion; tema propio en `web/src/theme.ts`. Sin Tailwind ni shadcn/ui. |
 | Tiempo real | SSE |
 | API | REST estricto: recursos en sustantivos, verbos HTTP (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`), **sin acciones en la URL**. Las transiciones de estado se expresan como `PATCH /:id/estado` con el estado destino en el cuerpo; las acciones administrativas como subrecursos (`POST /:id/token`). `PUT` se reserva para reemplazos completos de una colección hija, por ejemplo `PUT /tecnicos/:id/especialidades`. |
 | Auth | Sesión en PostgreSQL + cookie httpOnly + CSRF |

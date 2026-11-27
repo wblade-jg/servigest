@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Alert, Box, Stack, Typography } from '@mui/material'
 import { get, patch, ApiError } from '../../../lib/api'
-import { type Solicitud, fechaLocal } from '../../../lib/solicitudes'
-import { Boton, Campo, AreaTexto, Selector, Modal } from '../../../components/ui/primitivos'
+import { type Solicitud, ETIQUETAS_PRIORIDAD, fechaLocal } from '../../../lib/solicitudes'
+import { Boton, Campo, AreaTexto, Entrada, Selector, Modal } from '../../../components/ui/primitivos'
+import { archivo } from '../../../theme'
 
 interface TecnicoItem {
   id: string
@@ -127,26 +129,30 @@ export default function ModalAsignar({
 
   return (
     <Modal titulo={titulo} abierto={abierto} onCerrar={onCerrar}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <Stack component="form" onSubmit={handleSubmit} spacing={2}>
         {solicitud.especialidadRequeridaNombre && (
-          <div className="rounded-md bg-azul/10 p-3 text-xs text-azul">
-            <span className="font-semibold">Especialidad requerida:</span>{' '}
-            {solicitud.especialidadRequeridaNombre}
-          </div>
+          <Box sx={{ bgcolor: 'info.light', color: 'info.dark', px: 1.5, py: 1, borderRadius: 1 }}>
+            <Typography variant="body2">
+              <Box component="span" sx={{ fontFamily: archivo, fontWeight: 700 }}>
+                Especialidad requerida:
+              </Box>{' '}
+              {solicitud.especialidadRequeridaNombre}
+            </Typography>
+          </Box>
         )}
 
         {solicitud.fechaObjetivo && (
-          <div className="rounded-md bg-lavanda p-3 text-xs text-tinta-700">
-            <span className="font-semibold">Fecha límite SLA:</span>{' '}
-            {fechaLocal(solicitud.fechaObjetivo)} ({solicitud.prioridad || 'Sin prioridad'})
-          </div>
+          <Box sx={{ bgcolor: 'background.default', px: 1.5, py: 1, borderRadius: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              <Box component="span" sx={{ fontFamily: archivo, fontWeight: 700, color: 'text.primary' }}>
+                Fecha límite SLA:
+              </Box>{' '}
+              {fechaLocal(solicitud.fechaObjetivo)} ({solicitud.prioridad ? ETIQUETAS_PRIORIDAD[solicitud.prioridad] ?? solicitud.prioridad : 'Sin prioridad'})
+            </Typography>
+          </Box>
         )}
 
-        {error && (
-          <div className="rounded-md bg-rojo-100 p-3 text-xs text-rojo font-medium">
-            {error}
-          </div>
-        )}
+        {error && <Alert severity="error">{error}</Alert>}
 
         <Campo
           label="Técnico asignado"
@@ -178,20 +184,19 @@ export default function ModalAsignar({
           label="Fecha y hora de intervención"
           ayuda="Debe coincidir con la franja horaria de disponibilidad del técnico."
         >
-          <input
+          <Entrada
             type="datetime-local"
             value={fechaProgramada}
             onChange={(e) => setFechaProgramada(e.target.value)}
-            className="w-full rounded-md border border-tinta-900/20 px-3 py-2 text-sm focus:border-azul focus:outline-none focus:ring-1 focus:ring-azul"
             disabled={guardando}
             required
           />
         </Campo>
 
         {superaSla && (
-          <div className="rounded-md bg-amarillo/20 p-2.5 text-xs text-amarillo font-medium">
-            ⚠️ La fecha seleccionada supera el SLA objetivo ({fechaLocal(solicitud.fechaObjetivo!)}).
-          </div>
+          <Alert severity="warning">
+            La fecha seleccionada supera el SLA objetivo ({fechaLocal(solicitud.fechaObjetivo!)}).
+          </Alert>
         )}
 
         {esReasignacion && (
@@ -209,15 +214,15 @@ export default function ModalAsignar({
           </Campo>
         )}
 
-        <div className="flex justify-end gap-2 pt-2">
+        <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', pt: 1 }}>
           <Boton type="button" variante="secundario" onClick={onCerrar} disabled={guardando}>
             Cancelar
           </Boton>
           <Boton type="submit" variante="primario" disabled={guardando || cargandoTecnicos}>
             {guardando ? 'Guardando...' : esReasignacion ? 'Confirmar reasignación' : 'Asignar técnico'}
           </Boton>
-        </div>
-      </form>
+        </Stack>
+      </Stack>
     </Modal>
   )
 }

@@ -1,15 +1,16 @@
 import { Outlet } from 'react-router-dom'
+import { Box } from '@mui/material'
 import SiteHeader from '../../components/SiteHeader'
 import SiteFooter from '../../components/SiteFooter'
 
 export default function PublicLayout() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <SiteHeader />
-      <main className="flex-1">
+      <Box component="main" sx={{ flex: 1 }}>
         <Outlet />
-      </main>
+      </Box>
       <SiteFooter />
-    </div>
+    </Box>
   )
 }

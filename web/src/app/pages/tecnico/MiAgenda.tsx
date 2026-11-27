@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Alert, Box, Card, CardContent, Chip, Stack, Typography } from '@mui/material'
 import { get, ApiError } from '../../../lib/api'
 import { useSse } from '../../../lib/sse'
 import {
@@ -13,7 +14,8 @@ import {
   iniciarIntervencion,
   listarIntervenciones,
 } from '../../../lib/intervenciones'
-import { BadgeEstado, Boton, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import { BadgeEstado, Boton, Cargando, ErrorPanel, Pagina } from '../../../components/ui/primitivos'
+import { archivo } from '../../../theme'
 import ModalResolverIntervencion from '../solicitudes/ModalResolverIntervencion'
 
 // Agenda del técnico: sus solicitudes asignadas, con acciones para iniciar
@@ -25,13 +27,15 @@ interface FilaAgenda {
   intervencionAbierta: Intervencion | null
 }
 
-// Color del SLA según el tiempo restante hasta la fecha objetivo.
-function estadoSla (fechaObjetivo: string | null): { texto: string; clase: string } | null {
+type TonoSla = 'success' | 'warning' | 'error'
+
+// Tono del SLA según el tiempo restante hasta la fecha objetivo.
+function estadoSla (fechaObjetivo: string | null): { texto: string; tono: TonoSla } | null {
   if (!fechaObjetivo) return null
   const restanteMs = new Date(fechaObjetivo).getTime() - Date.now()
-  if (restanteMs < 0) return { texto: 'SLA vencido', clase: 'bg-red-100 text-red-800' }
-  if (restanteMs < 24 * 3600 * 1000) return { texto: 'SLA por vencer', clase: 'bg-amber-100 text-amber-800' }
-  return { texto: 'SLA en plazo', clase: 'bg-emerald-100 text-emerald-800' }
+  if (restanteMs < 0) return { texto: 'SLA vencido', tono: 'error' }
+  if (restanteMs < 24 * 3600 * 1000) return { texto: 'SLA por vencer', tono: 'warning' }
+  return { texto: 'SLA en plazo', tono: 'success' }
 }
 
 export default function MiAgenda () {
@@ -87,13 +91,17 @@ export default function MiAgenda () {
 
   if (error) {
     return (
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <Pagina>
         <ErrorPanel mensaje={error} />
-      </section>
+      </Pagina>
     )
   }
   if (!filas) {
-    return <section className="mx-auto max-w-5xl px-6 py-10"><Cargando texto="Cargando tu agenda…" /></section>
+    return (
+      <Pagina>
+        <Cargando texto="Cargando tu agenda…" />
+      </Pagina>
+    )
   }
 
   const pendientes = filas.filter((f) => f.solicitud.estado === 'ASIGNADA')
@@ -101,16 +109,14 @@ export default function MiAgenda () {
   const finalizadas = filas.filter((f) => ['RESUELTA', 'CERRADA', 'CANCELADA'].includes(f.solicitud.estado))
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Mi agenda</h1>
-      <p className="mt-2 text-sm text-tinta-700">
+    <Pagina>
+      <Typography variant="h2">Mi agenda</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
         Solicitudes asignadas a ti. Inicia la intervención al llegar al sitio y resuélvela con su
         documentación completa.
-      </p>
+      </Typography>
 
-      {mensaje && (
-        <p className="mt-4 rounded-md bg-emerald-100 px-4 py-2 text-sm text-emerald-800">{mensaje}</p>
-      )}
+      {mensaje && <Alert severity="info" onClose={() => setMensaje(null)} sx={{ mt: 3 }}>{mensaje}</Alert>}
 
       <Grupo
         titulo="Pendientes de iniciar"
@@ -146,9 +152,9 @@ export default function MiAgenda () {
         vacio="Aún no tienes solicitudes finalizadas."
         filas={finalizadas}
         accion={(fila) => (
-          <span className="text-xs text-tinta-500">
+          <Typography variant="caption" color="text.secondary">
             {fila.solicitud.resolucion ? 'Resolución registrada' : 'Sin resolución'}
-          </span>
+          </Typography>
         )}
       />
 
@@ -164,7 +170,7 @@ export default function MiAgenda () {
           }}
         />
       )}
-    </section>
+    </Pagina>
   )
 }
 
@@ -180,71 +186,84 @@ function Grupo ({
   accion: (fila: FilaAgenda) => React.ReactNode
 }) {
   return (
-    <div className="mt-8">
-      <h2 className="font-display text-lg font-bold">{titulo}</h2>
+    <Box component="section" sx={{ mt: 4 }}>
+      <Typography variant="h5">{titulo}</Typography>
       {filas.length === 0 ? (
-        <p className="mt-2 text-sm text-tinta-500">{vacio}</p>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{vacio}</Typography>
       ) : (
-        <ul className="mt-3 space-y-3">
+        <Stack spacing={2} sx={{ mt: 2 }}>
           {filas.map((fila) => {
             const { solicitud } = fila
             const sla = estadoSla(solicitud.fechaObjetivo)
             return (
-              <li key={solicitud.id} className="rounded-lg border border-tinta-900/10 bg-white p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-display text-lg font-bold">{solicitud.codigo}</span>
-                      <BadgeEstado
-                        estado={solicitud.estado}
-                        texto={ETIQUETAS_ESTADO[solicitud.estado] ?? solicitud.estado}
-                      />
-                      {solicitud.prioridad && (
-                        <span className="text-xs text-tinta-500">
-                          Prioridad {ETIQUETAS_PRIORIDAD[solicitud.prioridad] ?? solicitud.prioridad}
-                        </span>
-                      )}
-                      {sla && (
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-display font-bold ${sla.clase}`}>
-                          {sla.texto}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-tinta-700">{solicitud.descripcion}</p>
-                    <dl className="mt-3 grid gap-x-6 gap-y-1 text-xs text-tinta-500 sm:grid-cols-2">
-                      <div className="flex gap-1">
-                        <dt className="font-display font-bold">Categoría:</dt>
-                        <dd>{solicitud.categoriaNombre ?? '—'}</dd>
-                      </div>
-                      <div className="flex gap-1">
-                        <dt className="font-display font-bold">Programada:</dt>
-                        <dd>{fechaLocal(solicitud.fechaProgramada)}</dd>
-                      </div>
-                      <div className="flex gap-1">
-                        <dt className="font-display font-bold">SLA:</dt>
-                        <dd>{fechaLocal(solicitud.fechaObjetivo)}</dd>
-                      </div>
-                      <div className="flex gap-1">
-                        <dt className="font-display font-bold">Ubicación:</dt>
-                        <dd>{solicitud.ubicacion || 'No indicada'}</dd>
-                      </div>
-                      <div className="flex gap-1">
-                        <dt className="font-display font-bold">Contacto:</dt>
-                        <dd>{solicitud.contactoNombre} · {solicitud.contactoTelefono}</dd>
-                      </div>
-                      <div className="flex gap-1">
-                        <dt className="font-display font-bold">Organización:</dt>
-                        <dd>{solicitud.organizacionNombre ?? 'Visitante público'}</dd>
-                      </div>
-                    </dl>
-                  </div>
-                  <div className="shrink-0">{accion(fila)}</div>
-                </div>
-              </li>
+              <Card key={solicitud.id} variant="outlined">
+                <CardContent>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', gap: 2 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                        <Typography variant="h5">{solicitud.codigo}</Typography>
+                        <BadgeEstado
+                          estado={solicitud.estado}
+                          texto={ETIQUETAS_ESTADO[solicitud.estado] ?? solicitud.estado}
+                        />
+                        {solicitud.prioridad && (
+                          <Typography variant="caption" color="text.secondary">
+                            Prioridad {ETIQUETAS_PRIORIDAD[solicitud.prioridad] ?? solicitud.prioridad}
+                          </Typography>
+                        )}
+                        {sla && <Chip size="small" color={sla.tono} label={sla.texto} />}
+                      </Stack>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mt: 1,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {solicitud.descripcion}
+                      </Typography>
+                      <Box
+                        component="dl"
+                        sx={{
+                          mt: 1.5,
+                          mb: 0,
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                          columnGap: 3,
+                          rowGap: 0.5,
+                        }}
+                      >
+                        <LineaDato etiqueta="Categoría" valor={solicitud.categoriaNombre ?? '—'} />
+                        <LineaDato etiqueta="Programada" valor={fechaLocal(solicitud.fechaProgramada)} />
+                        <LineaDato etiqueta="SLA" valor={fechaLocal(solicitud.fechaObjetivo)} />
+                        <LineaDato etiqueta="Ubicación" valor={solicitud.ubicacion || 'No indicada'} />
+                        <LineaDato etiqueta="Contacto" valor={`${solicitud.contactoNombre} · ${solicitud.contactoTelefono}`} />
+                        <LineaDato etiqueta="Organización" valor={solicitud.organizacionNombre ?? 'Visitante público'} />
+                      </Box>
+                    </Box>
+                    <Box sx={{ flexShrink: 0 }}>{accion(fila)}</Box>
+                  </Stack>
+                </CardContent>
+              </Card>
             )
           })}
-        </ul>
+        </Stack>
       )}
-    </div>
+    </Box>
+  )
+}
+
+function LineaDato ({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+  return (
+    <Box sx={{ display: 'flex', gap: 0.5, fontSize: 13 }}>
+      <Box component="dt" sx={{ fontFamily: archivo, fontWeight: 700, color: 'text.secondary', fontSize: 12 }}>
+        {etiqueta}:
+      </Box>
+      <Box component="dd" sx={{ m: 0, fontSize: 12, color: 'text.secondary' }}>{valor}</Box>
+    </Box>
   )
 }

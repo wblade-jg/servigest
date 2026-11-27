@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { Card, CardContent, Stack, Typography } from '@mui/material'
 import { ApiError } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
-import { Boton, Campo, Entrada, ErrorPanel } from '../../components/ui/primitivos'
+import { Boton, Campo, Entrada, ErrorPanel, Pagina } from '../../components/ui/primitivos'
 
 const MENSAJES: Record<string, string> = {
   CREDENCIALES_INVALIDAS: 'Correo o contraseña incorrectos.',
@@ -76,37 +77,43 @@ export default function Login() {
   }
 
   return (
-    <section className="mx-auto flex max-w-sm flex-col px-6 py-16">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Ingresar al portal</h1>
-      <p className="mt-2 text-sm text-tinta-700">Accede con tu cuenta de ServiGest Ecuador.</p>
+    <Pagina maxWidth="xs">
+      <Typography variant="h2">Ingresar al portal</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        Accede con tu cuenta de ServiGest Ecuador.
+      </Typography>
 
-      <form onSubmit={enviar} className="mt-8 space-y-4" noValidate>
-        {error && <ErrorPanel mensaje={error} />}
-        <Campo label="Correo electrónico">
-          <Entrada
-            type="email"
-            name="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@correo.com.ec"
-          />
-        </Campo>
-        <Campo label="Contraseña">
-          <Entrada
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Campo>
-        <Boton type="submit" disabled={enviando} className="w-full justify-center">
-          {enviando ? 'Ingresando…' : 'Ingresar'}
-        </Boton>
-      </form>
-    </section>
+      <Card variant="outlined" sx={{ mt: 3 }}>
+        <CardContent>
+          <Stack component="form" onSubmit={enviar} spacing={2.5} noValidate>
+            {error && <ErrorPanel mensaje={error} />}
+            <Campo label="Correo electrónico">
+              <Entrada
+                type="email"
+                name="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@correo.com.ec"
+              />
+            </Campo>
+            <Campo label="Contraseña">
+              <Entrada
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </Campo>
+            <Boton type="submit" fullWidth disabled={enviando}>
+              {enviando ? 'Ingresando…' : 'Ingresar'}
+            </Boton>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Pagina>
   )
 }

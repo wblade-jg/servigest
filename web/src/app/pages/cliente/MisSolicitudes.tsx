@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material'
 import { get, ApiError } from '../../../lib/api'
 import {
   type ListadoSolicitudes,
@@ -7,7 +8,17 @@ import {
   ETIQUETAS_PRIORIDAD,
   fechaLocal,
 } from '../../../lib/solicitudes'
-import { BadgeEstado, Entrada, Selector, Boton, Cargando, ErrorPanel } from '../../../components/ui/primitivos'
+import {
+  BadgeEstado,
+  Boton,
+  Cargando,
+  Entrada,
+  ErrorPanel,
+  EstadoVacio,
+  Pagina,
+  Selector,
+} from '../../../components/ui/primitivos'
+import { archivo } from '../../../theme'
 
 const LIMITE = 20
 
@@ -49,98 +60,117 @@ export default function MisSolicitudes () {
   const totalPaginas = listado ? Math.max(1, Math.ceil(listado.total / LIMITE)) : 1
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Mis solicitudes</h1>
-          <p className="mt-2 text-sm text-tinta-700">
+    <Pagina>
+      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2 }}>
+        <Box>
+          <Typography variant="h2">Mis solicitudes</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Requerimientos de tu organización. Puedes cancelar una solicitud antes de su aprobación.
-          </p>
-        </div>
-        <Link
-          to="/app/mis-solicitudes/nueva"
-          className="rounded-md bg-violeta-500 px-4 py-2 font-display text-sm font-bold text-white hover:bg-violeta-700"
-        >
+          </Typography>
+        </Box>
+        <Button component={Link} to="/app/mis-solicitudes/nueva" variant="contained">
           Nueva solicitud
-        </Link>
-      </div>
+        </Button>
+      </Stack>
 
-      <div className="mt-6 flex flex-wrap gap-3">
+      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2, mt: 3, maxWidth: 560 }}>
         <Entrada
           aria-label="Buscar solicitudes"
           placeholder="Buscar por código o descripción…"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          className="max-w-xs"
         />
         <Selector
           aria-label="Filtrar por estado"
           value={estado}
           onChange={(e) => { setEstado(e.target.value); setPage(1) }}
-          className="max-w-xs"
         >
           <option value="">Todos los estados</option>
           {Object.entries(ETIQUETAS_ESTADO).map(([clave, etiqueta]) => (
             <option key={clave} value={clave}>{etiqueta}</option>
           ))}
         </Selector>
-      </div>
+      </Stack>
 
-      {error && <div className="mt-6"><ErrorPanel mensaje={error} /></div>}
+      {error && <Box sx={{ mt: 3 }}><ErrorPanel mensaje={error} /></Box>}
 
-      {cargando && !listado && <div className="mt-8"><Cargando texto="Cargando solicitudes…" /></div>}
+      {cargando && !listado && <Box sx={{ mt: 4 }}><Cargando texto="Cargando solicitudes…" /></Box>}
 
       {listado && listado.data.length === 0 && (
-        <div className="mt-8 rounded-lg border border-tinta-900/10 bg-white p-8 text-center">
-          <p className="text-tinta-700">Aún no hay solicitudes registradas.</p>
-          <Link to="/app/mis-solicitudes/nueva" className="mt-3 inline-block text-violeta-500 underline">
-            Crear la primera solicitud
-          </Link>
-        </div>
+        <Box sx={{ mt: 4 }}>
+          <EstadoVacio
+            accion={
+              <Button component={Link} to="/app/mis-solicitudes/nueva" variant="contained" size="small">
+                Crear la primera solicitud
+              </Button>
+            }
+          >
+            Aún no hay solicitudes registradas.
+          </EstadoVacio>
+        </Box>
       )}
 
       {listado && listado.data.length > 0 && (
         <>
-          <ul className="mt-6 space-y-3">
+          <Stack spacing={2} sx={{ mt: 3 }}>
             {listado.data.map((s) => (
-              <li key={s.id} className="rounded-lg border border-tinta-900/10 bg-white p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link to={`/app/mis-solicitudes/${s.id}`} className="font-display text-lg font-bold text-violeta-700 hover:underline">
-                        {s.codigo}
-                      </Link>
-                      <BadgeEstado estado={s.estado} texto={ETIQUETAS_ESTADO[s.estado] ?? s.estado} />
-                      {s.prioridad && (
-                        <span className="text-xs text-tinta-500">
-                          Prioridad {ETIQUETAS_PRIORIDAD[s.prioridad] ?? s.prioridad}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-tinta-700">{s.descripcion}</p>
-                    <p className="mt-2 text-xs text-tinta-500">
-                      {s.categoriaNombre ?? 'Sin categoría'} · Creada {fechaLocal(s.fechaCreacion)} · SLA {fechaLocal(s.fechaObjetivo)}
-                    </p>
-                  </div>
-                  <Link to={`/app/mis-solicitudes/${s.id}`} className="shrink-0">
-                    <Boton variante="secundario">Ver detalle</Boton>
-                  </Link>
-                </div>
-              </li>
+              <Card key={s.id} variant="outlined">
+                <CardContent>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                        <Typography
+                          component={Link}
+                          to={`/app/mis-solicitudes/${s.id}`}
+                          variant="h5"
+                          sx={{ color: 'primary.dark', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                        >
+                          {s.codigo}
+                        </Typography>
+                        <BadgeEstado estado={s.estado} texto={ETIQUETAS_ESTADO[s.estado] ?? s.estado} />
+                        {s.prioridad && (
+                          <Typography variant="caption" color="text.secondary">
+                            Prioridad {ETIQUETAS_PRIORIDAD[s.prioridad] ?? s.prioridad}
+                          </Typography>
+                        )}
+                      </Stack>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mt: 1,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {s.descripcion}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontFamily: archivo }}>
+                        {s.categoriaNombre ?? 'Sin categoría'} · Creada {fechaLocal(s.fechaCreacion)} · SLA {fechaLocal(s.fechaObjetivo)}
+                      </Typography>
+                    </Box>
+                    <Boton component={Link} to={`/app/mis-solicitudes/${s.id}`} variante="secundario" size="small" sx={{ flexShrink: 0 }}>
+                      Ver detalle
+                    </Boton>
+                  </Stack>
+                </CardContent>
+              </Card>
             ))}
-          </ul>
+          </Stack>
 
-          <div className="mt-6 flex items-center justify-between text-sm">
-            <span className="text-tinta-500">
+          <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mt: 3 }}>
+            <Typography variant="caption" color="text.secondary">
               {listado.total} solicitud{listado.total === 1 ? '' : 'es'} · Página {page} de {totalPaginas}
-            </span>
-            <div className="flex gap-2">
-              <Boton variante="secundario" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Boton>
-              <Boton variante="secundario" disabled={page >= totalPaginas} onClick={() => setPage((p) => p + 1)}>Siguiente</Boton>
-            </div>
-          </div>
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Boton variante="secundario" size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Boton>
+              <Boton variante="secundario" size="small" disabled={page >= totalPaginas} onClick={() => setPage((p) => p + 1)}>Siguiente</Boton>
+            </Stack>
+          </Stack>
         </>
       )}
-    </section>
+    </Pagina>
   )
 }
